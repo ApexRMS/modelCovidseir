@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package
+  name="modelCovidseir"
+  displayName="Add-On to the Epi Package for the Covidseir model"
+  isAddOn="True" 
+  extendsPackage="epi"
+  version="1.0.0">
+  <transformers>
+    <transformer 
+      name="Fit" 
+      isPrimary="True"
+      displayName="Covidseir Model - Fit"
+      programName="Rscript"
+      programArguments="fit.R"
+      extendsTransformer="epi_Primary"
+      isRunnable ="True">
+      <include>
+        <transformer name="Project"/>
+      </include>
+    </transformer>
+    <transformer 
+      name="Project" 
+      displayName="Covidseir Model - Project"
+      programName="Rscript"
+      programArguments="project.R"
+      extendsTransformer="epi_Primary"
+      isRunnable ="True">
+    </transformer>
+  </transformers>
+</package>
