@@ -1,30 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package
-  name="modelCovidseir"
-  displayName="Add-On to the Epi Package for the Covidseir model"
-  isAddOn="True" 
-  extendsPackage="epi"
-  version="1.0.0">
-  <transformers>
-    <transformer 
-      name="Fit" 
-      isPrimary="True"
-      displayName="Covidseir Model - Fit"
-      programName="Rscript"
-      programArguments="fit.R"
-      extendsTransformer="epi_Primary"
-      isRunnable ="True">
-      <include>
-        <transformer name="Project"/>
-      </include>
-    </transformer>
-    <transformer 
-      name="Project" 
-      displayName="Covidseir Model - Project"
-      programName="Rscript"
-      programArguments="project.R"
-      extendsTransformer="epi_Primary"
-      isRunnable ="True">
-    </transformer>
-  </transformers>
+	name="covidSEIR"
+	displayName="Add-On to the Epidemic Package for BC COVID-19 case reporting delay data"
+	isAddOn="True"
+	extendsPackage="epi"
+	version="1.0.0">
+	<transformers>
+		<transformer
+			name="Download"
+			isPrimary="True"
+			displayName="Downloas Case Reporting Data"
+			programName="Rscript"
+			programArguments="getDelayData.R"
+			extendsTransformer="epi_Primary"
+			runContext="LocalOnly"
+			isRunnable="True">
+			<datafeeds>
+				<datafeed name="ReportingDelays" displayName="Case Reporting Delays" dataScope="Scenario">
+                    <datasheets>
+                        <datasheet name="ReportingDelays" displayName="Case Reporting Delays" isSingleRow="True">
+                            <columns>
+                                <column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
+                                <column name="ScenarioID" dataType="Integer"/>
+                                <column name="delayURL" dataType="String" displayName="Delay Data URL"/>
+                            </columns>
+                        </datasheet>
+                    </datasheets>
+                </datafeed>
+				<datafeed name="DelayData" displayName="Case Reporting Delay Data" dataScope="Scenario" isOutput="True">
+                    <datasheets>
+                        <datasheet name="DelayData" displayName="Case Reporting Delay Data">
+                            <columns>
+                                <column name="ScenarioID" dataType="Integer"/>
+                                <column name="dateReported" dataType="String" displayName="Day on which each case was reported"/>
+                                <column name="dateSymptom" dataType="String" displayName="Day on which symptoms appeared"/>
+                                <column name="reportingGap" dataType="Integer" displayName="Delay between symptoms and case report (days)"/>
+                            </columns>
+                        </datasheet>
+                    </datasheets>
+                </datafeed>
+				<datafeed name="FSegments" displayName="Social distancing break points" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="FSegments" displayname="Social distancing break points">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="Date" dataType="Date" displayName="Date"/>
+								<column name="Mean" dataType="Double" displayName="Mean"/>
+								<column name="SD" dataType="Double" displayName="Standard Deviation"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed>
+			</datafeeds>
+		</transformer>
+	</transformers>
+	<layouts>
+		<layout name="coreforms_ScenarioDatafeeds">
+			<item name="ReportingDelays" appendTo="epi_Inputs"/>
+			<item name="FSegments" appendTo="epi_Inputs"/>
+			<item name="DelayData" runRequired="True" appendTo="epi_Outputs"/>
+		</layout>
+	</layouts>
 </package>
