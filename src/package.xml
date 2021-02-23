@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package
-	name="covidSEIR"
-	displayName="Add-On to the Epidemic Package for BC COVID-19 case reporting delay data"
+	name="modelCovidseir"
+	displayName="Add-On to the Epi Package for the covidSEIR model"
 	isAddOn="True"
 	extendsPackage="epi"
 	version="1.0.0">
@@ -53,6 +53,41 @@
 					</datasheets>
 				</datafeed>
 			</datafeeds>
+			<include>
+				<transformer name="Fit"/>
+			</include>
+		</transformer>
+		<transformer
+			name="Fit"
+			displayName="Covidseir Model - Fit"
+			programName="Rscript"
+			programArguments="fit.R"
+			extendsTransformer="epi_Primary"
+			isRunnable ="True">
+			<datafeeds>
+				<datafeed name="WeibullParameters" displayName="Weibull Shape and Scale Parameters" dataScope="Scenario" isOutput="True">
+					<datasheets>
+						<datasheet name="WeibullParameters" displayName="Weibull Shape and Scale Parameters" isSingleRow="True">
+							<columns>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="mleShape" dataType="Double" displayName="Shape Parameter"/>
+								<column name="mleScale" dataType="Double" displayName="Scale Parameter"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+                </datafeed>
+				<datafeed name="DelayDist" displayName="Reporting Delay Distribution Parameters" dataScope="Scenario" isOutput="True">
+					<datasheets>
+						<datasheet name="DelayDist" displayName="Reporting Delay Distribution Parameters">
+							<columns>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="x" dataType="Double" displayName="x"/>
+								<column name="y" dataType="Double" displayName="y"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed>
+			</datafeeds>
 		</transformer>
 	</transformers>
 	<layouts>
@@ -60,6 +95,8 @@
 			<item name="ReportingDelays" appendTo="epi_Inputs"/>
 			<item name="FSegments" appendTo="epi_Inputs"/>
 			<item name="DelayData" runRequired="True" appendTo="epi_Outputs"/>
+			<item name="WeibullParameters" runRequired="True" appendTo="epi_Outputs"/>
+			<item name="DelayDist" runRequired="True" appendTo="epi_Outputs"/>
 		</layout>
 	</layouts>
 </package>
