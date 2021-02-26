@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package
-	name="modelCovidseir"
-	displayName="Add-On to the Epi Package for the covidSEIR model"
-	isAddOn="True"
-	extendsPackage="epi"
-	version="1.0.0">
+<package name="modelCovidseir" displayName="Add-On to the Epidemic Package for the covidSEIR model" isAddOn="True" extendsPackage="epi" version="1.0.0">
 	<transformers>
 		<transformer
 			name="Download"
 			isPrimary="True"
-			displayName="Downloas Case Reporting Data"
+			displayName="Download Case Reporting Data"
 			programName="Rscript"
 			programArguments="getDelayData.R"
 			extendsTransformer="epi_Primary"
@@ -17,54 +12,42 @@
 			isRunnable="True">
 			<datafeeds>
 				<datafeed name="ReportingDelays" displayName="Case Reporting Delays" dataScope="Scenario">
-                    <datasheets>
-                        <datasheet name="ReportingDelays" displayName="Case Reporting Delays" isSingleRow="True">
-                            <columns>
-                                <column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
-                                <column name="ScenarioID" dataType="Integer"/>
-                                <column name="delayURL" dataType="String" displayName="Delay Data URL"/>
-                            </columns>
-                        </datasheet>
-                    </datasheets>
-                </datafeed>
+          <datasheets>
+            <datasheet name="ReportingDelays" displayName="Case Reporting Delays" isSingleRow="True">
+              <columns>
+                <column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
+                <column name="ScenarioID" dataType="Integer"/>
+                <column name="delayURL" dataType="String" displayName="Delay Data URL"/>
+              </columns>
+							<defaultRecords>
+								<record columns="delayURL" values="https://github.com/andrew-edwards/rightTruncation/raw/master/data/delay_data_2021_01_05.rda"/>
+							</defaultRecords>
+            </datasheet>
+          </datasheets>
+        </datafeed>
 				<datafeed name="DelayData" displayName="Case Reporting Delay Data" dataScope="Scenario" isOutput="True">
-                    <datasheets>
-                        <datasheet name="DelayData" displayName="Case Reporting Delay Data">
-                            <columns>
-                                <column name="ScenarioID" dataType="Integer"/>
-                                <column name="dateReported" dataType="String" displayName="Day on which each case was reported"/>
-                                <column name="dateSymptom" dataType="String" displayName="Day on which symptoms appeared"/>
-                                <column name="reportingGap" dataType="Integer" displayName="Delay between symptoms and case report (days)"/>
-                            </columns>
-                        </datasheet>
-                    </datasheets>
-                </datafeed>
-				<datafeed name="FSegments" displayName="Social distancing break points" dataScope="Scenario">
+          <datasheets>
+            <datasheet name="DelayData" displayName="Case Reporting Delay Data">
+              <columns>
+                <column name="ScenarioID" dataType="Integer"/>
+                <column name="dateReported" dataType="String" displayName="Day on which each case was reported"/>
+                <column name="dateSymptom" dataType="String" displayName="Day on which symptoms appeared"/>
+                <column name="reportingGap" dataType="Integer" displayName="Delay between symptoms and case report (days)"/>
+              </columns>
+            </datasheet>
+          </datasheets>
+        </datafeed>
+				<datafeed name="DelayOutput" displayName="Delay Data Raw Output" dataScope="Scenario" isOutput="True">
 					<datasheets>
-						<datasheet name="FSegments" displayname="Social distancing break points">
+						<datasheet name="DelayOutput" displayName="Delay Data Raw Output" isSingleRow="True">
 							<columns>
-								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
-								<column name="ScenarioID" dataType="Integer"/>
-								<column name="Date" dataType="Date" displayName="Date"/>
-								<column name="Mean" dataType="Double" displayName="Mean"/>
-								<column name="SD" dataType="Double" displayName="Standard Deviation"/>
+								<column name="ScenarioID" displayName="Scenario" dataType="Integer"/>
+								<column name="DelayDataFile" displayName="Reporting Delay Data File" dataType="String" isExternalFile="True"/>
+								<column name="DownloadDateTime" displayName="Download Date/Time" dataType="Date"/>
 							</columns>
 						</datasheet>
 					</datasheets>
 				</datafeed>
-			</datafeeds>
-			<include>
-				<transformer name="Fit"/>
-			</include>
-		</transformer>
-		<transformer
-			name="Fit"
-			displayName="Covidseir Model - Fit"
-			programName="Rscript"
-			programArguments="fit.R"
-			extendsTransformer="epi_Primary"
-			isRunnable ="True">
-			<datafeeds>
 				<datafeed name="WeibullParameters" displayName="Weibull Shape and Scale Parameters" dataScope="Scenario" isOutput="True">
 					<datasheets>
 						<datasheet name="WeibullParameters" displayName="Weibull Shape and Scale Parameters" isSingleRow="True">
@@ -75,7 +58,7 @@
 							</columns>
 						</datasheet>
 					</datasheets>
-                </datafeed>
+				</datafeed>
 				<datafeed name="DelayDist" displayName="Reporting Delay Distribution Parameters" dataScope="Scenario" isOutput="True">
 					<datasheets>
 						<datasheet name="DelayDist" displayName="Reporting Delay Distribution Parameters">
@@ -89,14 +72,101 @@
 				</datafeed>
 			</datafeeds>
 		</transformer>
+		<transformer
+			name="Fit"
+			displayName="Fitting Case Data"
+			programName="Rscript"
+			programArguments="fit.R"
+			extendsTransformer="epi_Primary"
+			isRunnable ="True">
+			<datafeeds>
+				<!-- <datafeed name="FSegments" displayName="Social distancing break points" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="FSegments" displayname="Social distancing break points">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="Date" dataType="Date" displayName="Date"/>
+								<column name="Mean" dataType="Double" displayName="Mean"/>
+								<column name="SD" dataType="Double" displayName="Standard Deviation"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed> -->
+				<!-- <datafeed name="SampFrac" displayName="Proportion of Cases Sampled" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="sampFrac" displayName="Proportion of Cases Sampled">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="Date" dataType="Date" displayName="Date"/>
+								<column name="fraction" dataType="Double" displayName="Sampling Fraction"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed> -->
+				<!-- <datafeed name="FitParameters" displayName="Parameters of the Fitting Function" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="FitParameters" displayName="Parameters of the Fitting Function">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True" isSingleColumn="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="NPop" dataType="Integer" displayName="Population Size"/>
+								<column name="TimeIncrement" dataType="Double" displayName="Time Increment"/>
+								<column name="NChains" dataType="Integer" displayName="Number of MCMC Chains"/>
+								<column name="NIterations" dataType="Integer" displayName="Number of Iterations"/>
+								<column name="FitType" dataType="String" displayName="Type of Fit (optimizing/NUTS)"/>
+								<column name="MCMCSeed" dataType="Integer" displayName="MCMC seed for RStan"/>
+							</columns>
+							<defaultRecords>
+								<record columns="NPop" values="5071000"/>
+								<record columns="TimeIncrement" values="0.25"/>
+								<record columns="NChains" values="4"/>
+								<record columns="NIterations" values="500"/>
+								<record columns="FitType" values="optimizing"/>
+								<record columns="MCMCSeed" values="42"/>
+							</defaultRecords>
+						</datasheet>
+					</datasheets>
+				</datafeed> -->
+				<!-- <datafeed name="FitPriors" displayName="Priors for the Fitting Function (Mean, SD)" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="FitPriors" displayName="Priors for the Fitting Function (Mean, SD)">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True" isSingleRow="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="R0Prior" dataType="String" displayName="Basic Reproductive Ratio "/>
+								<column name="EPrior" dataType="String" displayName="Fraction of the population social distancing"/>
+								<column name="StartDecline" dataType="String" displayName="Start of social distancing decline (day)"/>
+								<column name="EndDecline" dataType="String" displayName="End of social distancing decline (day)"/>
+								<column name="I0Prior" dataType="String" displayName="Initial number of infected persons"/>
+							</columns>
+							<defaultRecords>
+								<record columns="R0Prior" values="2.6, 0.2"/>
+								<record columns="EPrior" values="0.8, 0.5"/>
+								<record columns="StartDecline" values="15, 0.05"/>
+								<record columns="EndDecline" values="22, 0.05"/>
+								<record columns="IOPrior" values="8, 1"/>
+							</defaultRecords>
+						</datasheet>
+					</datasheets>
+				</datafeed> -->
+			</datafeeds>
+		</transformer>
 	</transformers>
 	<layouts>
 		<layout name="coreforms_ScenarioDatafeeds">
 			<item name="ReportingDelays" appendTo="epi_Inputs"/>
-			<item name="FSegments" appendTo="epi_Inputs"/>
-			<item name="DelayData" runRequired="True" appendTo="epi_Outputs"/>
-			<item name="WeibullParameters" runRequired="True" appendTo="epi_Outputs"/>
-			<item name="DelayDist" runRequired="True" appendTo="epi_Outputs"/>
+			<!-- <item name="SampFrac" appendTo="epi_Inputs"/> -->
+			<!-- <item name="FSegments" appendTo="epi_Inputs"/> -->
+			<!-- <item name="FitParameters" appendTo="epi_Inputs"/> -->
+			<!-- <item name="FitPriors" appendTo="epi_Inputs"/> -->
+			<group name="Datafeeds" displayName="Delay Distribution" appendTo="epi_Outputs">
+				<item name="DelayOutput"/>
+				<item name="DelayData"/>
+				<item name="WeibullParameters"/>
+				<item name="DelayDist"/>
+			</group>
 		</layout>
 	</layouts>
 </package>
