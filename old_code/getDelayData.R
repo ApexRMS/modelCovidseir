@@ -1,31 +1,18 @@
-# getdelayData.R
-# Download the symptom-onset-to-case-reporting delay data from the "rightTruncation" github
-# and gather a list of user-provided break points for the model fitting
-
-# Inputs:
-#	Download URL
-#	Table of changes to social distancing f Parameter
-#		<date>	<beta mean>	<beta sd>
-# Outputs:
-#	delayData.rda - the (large) raw rda file retrieved from the rightTruncation github
-#	delayDatasheet - a table of case reporting data, each row representing a unique case
-#		<symptom onset date>	<case reporting date>	<gap (measured in days)>
-#	DelayData.csv - CSV file of the case delay data, filtered by date for fitting the Model
-#	SocialDistancngSegments.csv - CSV of the social distancing breakpoints  for fitting
-
 library(rsyncrosim)
 library(tidyr)
 library(data.table)
 library(dplyr)
+library(rightTruncation)
 
-currentScenario <- scenario()
+myScenario <- scenario()
 env <- ssimEnvironment()
 
-grabInput <- datasheet(currentScenario, "covidSEIR_ReportingDelays")
+inputSheet <- datasheet(myScenario, "modelCovidseir_ReportingDelays")
+downloadURL <- inputSheet$delayURL
 
 rdaFileName <- paste(env$TransferDirectory, "delayData.rda", sep='/')
 download.file(
-    gsub(" ", "", grabInput$delayURL, fixed = TRUE),
+    gsub(' ', '', downloadURL, fixed = TRUE),
     destfile=rdaFileName,
     quiet = TRUE
 )
@@ -38,25 +25,61 @@ delayData <- get(load(rdaFileName)) %>%
             reported_date < "2020-12-01"
     )
 
-delayDataFilename <- paste(env$TransferDirectory, "DelayData.csv", sep="/")
+delayDataFilename <- paste(env$TransferDirectory, "DelayData.csv", sep='/')
 write.csv(delayData, delayDataFilename)
 
-delayDatasheet <- datasheet(currentScenario, "covidSEIR_DelayData")
+outputSheet <- datasheet(myScenario, "modelCovidseir_DelayOutput", empty = T)
+outputSheet <- transform(outputSheet, DownloadDateTime = as.character(DownloadDateTime))
+
+outputSheet = addRow(outputSheet, c(delayDataFilename, as.character(Sys.time())))
+saveDatasheet(myScenario, outputSheet, "modelCovidseir_DelayOutput")
+
+delayDatasheet <- datasheet(myScenario, "modelCovidseir_DelayData")
 delayDatasheet[nrow(delayData), ] <- NA
 delayDatasheet$dateReported <- delayData$reported_date
 delayDatasheet$dateSymptom <- delayData$symptom_onset_date
 delayDatasheet$reportingGap <- delayData$time_to_report
-saveDatasheet(currentScenario, delayDatasheet, "covidSEIR_DelayData")
+saveDatasheet(myScenario, delayDatasheet, "modelCovidseir_DelayData")
 
-runControl <- datasheet(currentScenario, "epi_RunControl")
-runControl[1,] <- NA
-runControl$MinimumTimestep = min(delayData$symptom_onset_date)
-runControl$MaximumTimestep = max(delayData$reported_date)
-runControl$MinimumIteration = 0
-runControl$	MaximumIteration = 0
-runControl$ModelHistoricalDeaths = TRUE
-saveDatasheet(currentScenario, runControl, "epi_RunControl")
+# set the first day so that we can calculate the time that passed in days
+hDay0 <- min(delayData$symptom_onset_date)
+# set the number of rows and columns of the matrix
+numRows <- (max(delayData$symptom_onset_date)-hDay0)[[1]]
+numCols <- (max(delayData$reported_date)-hDay0)[[1]]
 
-fSegments <- datasheet(currentScenario, "covidSEIR_FSegments")
-segmentsFilename <- paste(env$TransferDirectory, "SocialDistancingSegments.csv", sep="/")
-write.csv(fSegments, segmentsFilename)
+# fill the Hnr matrix with the case data as described in the previous long comment
+Hnr <- matrix(0, nrow=numRows, ncol=numCols)
+for(i in 1:nrow(delayData))
+{
+    onset <- (delayData[i]$symptom_onset_date - hDay0)[[1]]
+    repor <- (delayData[i]$reported_date - hDay0)[[1]];
+    Hnr[onset, repor] <- Hnr[onset, repor]+1
+}
+
+mleRes = suppressWarnings(nlm(
+    f = negLL_Weibull_counts_matrix,
+    p = c(2, 7),
+    h_nr = Hnr
+))
+
+# the parameters for the distribution
+mleShape <- mleRes$estimate[1]
+mleScale <- mleRes$estimate[2]
+
+wParams <- datasheet(myScenario, "modelCovidseir_WeibullParameters")
+wParams[1,] <-NA
+wParams$mleShape <- mleShape
+wParams$mleScale <- mleScale
+saveDatasheet(myScenario, wParams, "modelCovidseir_WeibullParameters")
+
+write.csv(wParams, paste(env$TransferDirectory, "modelCovidseir_WeibullParameters.csv", sep="/"), row.names=FALSE)
+
+# smooth Weibull curve to be superimposed
+weibullX <- seq(min(delayData$time_to_report), max(delayData$time_to_report), by=0.05)
+theDist <- data.table(x = weibullX, y = nrow(delayData)*dweibull(weibullX, shape=mleShape, scale=mleScale))
+
+weibullDist <- datasheet(myScenario, "modelCovidseir_DelayDist")
+weibullDist[length(weibullX),] <-NA
+weibullDist$x <- theDist$x
+weibullDist$y <- theDist$y
+saveDatasheet(myScenario, weibullDist, "modelCovidseir_DelayDist")

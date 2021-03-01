@@ -1,6 +1,6 @@
 rm(list=ls());
 
-options(width=Sys.getenv("COLUMNS"));
+# options(width=Sys.getenv("COLUMNS"));
 
 if(!require("pacman")){ install.packages("pacman", repos="https://utstat.toronto.edu/cran/"); }
 
@@ -17,8 +17,8 @@ library(rightTruncation);
 if(!require("covidseir")){ remotes::install_github("seananderson/covidseir", build_vignettes = TRUE); }
 library(covidseir);
 
-# setwd("C:/Users/User/Documents/samplepackage/");
-setwd("/mnt/c/Users/User/Dropbox/samplepackage/");
+# # setwd("C:/Users/User/Documents/samplepackage/");
+# setwd("/mnt/c/Users/User/Dropbox/samplepackage/");
 
 ymd <- lubridate::ymd;
 # # download the file from github
@@ -211,145 +211,145 @@ tidy_proj_cov <- covidseir::tidy_seir(proj_cov);
 tidy_proj_cov <- dplyr::left_join(tidy_proj_cov, lut, by = "day");
 save(tidy_proj_cov, file="RUN_tidy_proj_cov.rda");
 
-writeLines("\n\tPlotting graphs...\n");
-
-text_size <- 15;
-
-delay_data_fit <- ggplot(delay_data) +
-	geom_histogram(aes(time_to_report), binwidth=1, fill="grey", colour="black") +
-	geom_line(data=the_dist, aes(weibull_points, V2), colour="black", size=1) +
-	labs(x="Days from symptom onset to reporting", y='Frequency') +
-	theme_bw() +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5),
-		panel.grid.major = element_blank(),
-		panel.grid.minor = element_blank()
-	) +
-	scale_x_continuous(expand=c(0,0)) +
-	scale_y_continuous(expand=c(0,0));
-	ggsave(plot=delay_data_fit, file="covidseir_reporting_delay.png", height=6, width=6, units="in", dpi=600);
-
-pl_time_series <- ggplot(BC_cases, aes(date, value)) +
-	geom_line(colour="blue") +
-	theme_bw() +
-	labs(x="Date", y="Reported Cases") +
-	xlim(c(Day0, max(BC_cases$date))) +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5)
-	) +
-	scale_y_continuous(expand=c(0,0)) +
-	scale_x_date(date_breaks = "1 month");
-	ggsave(plot=pl_time_series, file="covidseir_case_data.png", height=6, width=22, units="in", dpi=600);
-
-fit <- get(load("RUN_fit.rda"));
-tidy_proj <- get(load("RUN_tidy_proj.rda"));
-
-projection_viz <- covidseir::plot_projection(tidy_proj, obs_dat=BC_cases, value_column="value", date_column="date") +
-	labs(x="Date", y="Reported Cases") +
-	theme_bw() +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5),
-		panel.grid.major = element_line(size=0),
-		panel.grid.minor = element_line(size=0)
-	) +
-	scale_y_continuous(expand=c(0,0)) +
-	scale_x_date(date_breaks = "1 month");
-	ggsave(projection_viz, file="covidseir_data_fit.png", height=6, width=22, dpi=600);
-
-projection_viz <- covidseir::plot_projection(tidy_proj, obs_dat=BC_cases, value_column="value", date_column="date") +
-	labs(x="Date", y="Reported Cases") +
-	theme_bw() +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5),
-		panel.grid.major = element_line(size=0),
-		panel.grid.minor = element_line(size=0)
-	) +
-	scale_y_continuous(expand=c(0,0)) +
-	scale_x_date(date_breaks = "1 month");
-	ggsave(projection_viz, file="covidseir_data_fit.png", height=6, width=22, dpi=600);
-
-projection_viz_cov <- covidseir::plot_projection(tidy_proj_cov, obs_dat=BC_cases, value_column="value", date_column="date") +
-	labs(x="Date", y="Reported Cases (added covariates)") +
-	theme_bw() +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5),
-		panel.grid.major = element_line(size=0),
-		panel.grid.minor = element_line(size=0)
-	) +
-	scale_y_continuous(expand=c(0,0)) +
-	scale_x_date(date_breaks = "1 month");
-	ggsave(projection_viz_cov, file="covidseir_data_fit_covariates.png", height=6, width=22, dpi=600);
-
-residuals_viz <- covidseir::plot_residuals(tidy_proj, obs_dat=BC_cases, obj=fit, date_column="date") +
-	theme_bw() +
-	labs(x="Date", y="Residual") +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5)
-	) +
-	scale_y_continuous(expand=c(0,0)) +
-	scale_x_date(date_breaks = "1 month");
-	ggsave(residuals_viz, file="covidseir_residual.png", height=6, width=9, dpi=600);
-
-set.seed(1);
-quantile_residuals_viz <- covidseir::plot_residuals(tidy_proj, obs_dat=BC_cases, obj=fit, type="quantile", date_column="date") +
-	theme_bw() +
-	labs(x="Date", y="Quantile Residual") +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5),
-		panel.grid.major = element_line(size=0),
-		panel.grid.minor = element_line(size=0)
-	);
-	ggsave(quantile_residuals_viz, file="covidseir_quantile_residual.png", height=6, width=9, dpi=600);
-
-set.seed(1)
-raw_residuals <- plot_residuals(tidy_proj, obs_dat=BC_cases, obj=fit, type="quantile", return_residuals=TRUE, date_column="date", value_column="value");
-
-pl_residuals <- ggplot(data.table(val=raw_residuals), aes(val), fill="grey", colour="black") +
-	geom_histogram(binwidth=0.5) +
-	theme_bw() +
-	labs(x="Residual", y="Frequency") +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5),
-		panel.grid.major = element_line(size=0),
-		panel.grid.minor = element_line(size=0)
-
-	);
-	ggsave(pl_residuals, file="covidseir_quantile_residual.png", height=6, width=9, dpi=600);
-
-pl_normal_qq <- ggplot(data=as.data.table(qqnorm(raw_residuals)), aes(sample=y)) +
-	stat_qq() +
-	stat_qq_line() +
-	theme_bw() +
-	labs(x="Theoretical Quantiles", y="Sample Quantiles") +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5),
-		panel.grid.major = element_line(size=0),
-		panel.grid.minor = element_line(size=0)
-	);
-	ggsave(pl_normal_qq, file="covidseir_normal_qq_plot.png", height=4, width=4, dpi=600);
-
-MEOECC <- purrr::map_dfr(1:7, ~tibble(dow=.x, b=fit_dow$post[[paste0("beta[", .x, "]")]]));
-pl_MEOECC <- ggplot(MEOECC, aes(dow, exp(b), group = dow)) +
-	geom_violin(colour="black", fill="blue") +
-	labs(x="Day of the week", y="Multiplicative effect on expected case counts") +
-	theme_bw() +
-	scale_x_continuous(breaks = 1:7, labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")) +
-	theme(
-		axis.title=element_text(size=text_size),
-		axis.text=element_text(size=text_size-5),
-		panel.grid.major.x = element_line(size=0),
-		panel.grid.minor.x = element_line(size=0)
-	);
-	ggsave(plot=pl_MEOECC, file="covidseir_violins.png", height=6, width=12, units="in", dpi=600);
+# writeLines("\n\tPlotting graphs...\n");
+#
+# text_size <- 15;
+#
+# delay_data_fit <- ggplot(delay_data) +
+# 	geom_histogram(aes(time_to_report), binwidth=1, fill="grey", colour="black") +
+# 	geom_line(data=the_dist, aes(weibull_points, V2), colour="black", size=1) +
+# 	labs(x="Days from symptom onset to reporting", y='Frequency') +
+# 	theme_bw() +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5),
+# 		panel.grid.major = element_blank(),
+# 		panel.grid.minor = element_blank()
+# 	) +
+# 	scale_x_continuous(expand=c(0,0)) +
+# 	scale_y_continuous(expand=c(0,0));
+# 	ggsave(plot=delay_data_fit, file="covidseir_reporting_delay.png", height=6, width=6, units="in", dpi=600);
+#
+# pl_time_series <- ggplot(BC_cases, aes(date, value)) +
+# 	geom_line(colour="blue") +
+# 	theme_bw() +
+# 	labs(x="Date", y="Reported Cases") +
+# 	xlim(c(Day0, max(BC_cases$date))) +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5)
+# 	) +
+# 	scale_y_continuous(expand=c(0,0)) +
+# 	scale_x_date(date_breaks = "1 month");
+# 	ggsave(plot=pl_time_series, file="covidseir_case_data.png", height=6, width=22, units="in", dpi=600);
+#
+# fit <- get(load("RUN_fit.rda"));
+# tidy_proj <- get(load("RUN_tidy_proj.rda"));
+#
+# projection_viz <- covidseir::plot_projection(tidy_proj, obs_dat=BC_cases, value_column="value", date_column="date") +
+# 	labs(x="Date", y="Reported Cases") +
+# 	theme_bw() +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5),
+# 		panel.grid.major = element_line(size=0),
+# 		panel.grid.minor = element_line(size=0)
+# 	) +
+# 	scale_y_continuous(expand=c(0,0)) +
+# 	scale_x_date(date_breaks = "1 month");
+# 	ggsave(projection_viz, file="covidseir_data_fit.png", height=6, width=22, dpi=600);
+#
+# projection_viz <- covidseir::plot_projection(tidy_proj, obs_dat=BC_cases, value_column="value", date_column="date") +
+# 	labs(x="Date", y="Reported Cases") +
+# 	theme_bw() +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5),
+# 		panel.grid.major = element_line(size=0),
+# 		panel.grid.minor = element_line(size=0)
+# 	) +
+# 	scale_y_continuous(expand=c(0,0)) +
+# 	scale_x_date(date_breaks = "1 month");
+# 	ggsave(projection_viz, file="covidseir_data_fit.png", height=6, width=22, dpi=600);
+#
+# projection_viz_cov <- covidseir::plot_projection(tidy_proj_cov, obs_dat=BC_cases, value_column="value", date_column="date") +
+# 	labs(x="Date", y="Reported Cases (added covariates)") +
+# 	theme_bw() +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5),
+# 		panel.grid.major = element_line(size=0),
+# 		panel.grid.minor = element_line(size=0)
+# 	) +
+# 	scale_y_continuous(expand=c(0,0)) +
+# 	scale_x_date(date_breaks = "1 month");
+# 	ggsave(projection_viz_cov, file="covidseir_data_fit_covariates.png", height=6, width=22, dpi=600);
+#
+# residuals_viz <- covidseir::plot_residuals(tidy_proj, obs_dat=BC_cases, obj=fit, date_column="date") +
+# 	theme_bw() +
+# 	labs(x="Date", y="Residual") +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5)
+# 	) +
+# 	scale_y_continuous(expand=c(0,0)) +
+# 	scale_x_date(date_breaks = "1 month");
+# 	ggsave(residuals_viz, file="covidseir_residual.png", height=6, width=9, dpi=600);
+#
+# set.seed(1);
+# quantile_residuals_viz <- covidseir::plot_residuals(tidy_proj, obs_dat=BC_cases, obj=fit, type="quantile", date_column="date") +
+# 	theme_bw() +
+# 	labs(x="Date", y="Quantile Residual") +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5),
+# 		panel.grid.major = element_line(size=0),
+# 		panel.grid.minor = element_line(size=0)
+# 	);
+# 	ggsave(quantile_residuals_viz, file="covidseir_quantile_residual.png", height=6, width=9, dpi=600);
+#
+# set.seed(1)
+# raw_residuals <- plot_residuals(tidy_proj, obs_dat=BC_cases, obj=fit, type="quantile", return_residuals=TRUE, date_column="date", value_column="value");
+#
+# pl_residuals <- ggplot(data.table(val=raw_residuals), aes(val), fill="grey", colour="black") +
+# 	geom_histogram(binwidth=0.5) +
+# 	theme_bw() +
+# 	labs(x="Residual", y="Frequency") +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5),
+# 		panel.grid.major = element_line(size=0),
+# 		panel.grid.minor = element_line(size=0)
+#
+# 	);
+# 	ggsave(pl_residuals, file="covidseir_quantile_residual.png", height=6, width=9, dpi=600);
+#
+# pl_normal_qq <- ggplot(data=as.data.table(qqnorm(raw_residuals)), aes(sample=y)) +
+# 	stat_qq() +
+# 	stat_qq_line() +
+# 	theme_bw() +
+# 	labs(x="Theoretical Quantiles", y="Sample Quantiles") +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5),
+# 		panel.grid.major = element_line(size=0),
+# 		panel.grid.minor = element_line(size=0)
+# 	);
+# 	ggsave(pl_normal_qq, file="covidseir_normal_qq_plot.png", height=4, width=4, dpi=600);
+#
+# MEOECC <- purrr::map_dfr(1:7, ~tibble(dow=.x, b=fit_dow$post[[paste0("beta[", .x, "]")]]));
+# pl_MEOECC <- ggplot(MEOECC, aes(dow, exp(b), group = dow)) +
+# 	geom_violin(colour="black", fill="blue") +
+# 	labs(x="Day of the week", y="Multiplicative effect on expected case counts") +
+# 	theme_bw() +
+# 	scale_x_continuous(breaks = 1:7, labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")) +
+# 	theme(
+# 		axis.title=element_text(size=text_size),
+# 		axis.text=element_text(size=text_size-5),
+# 		panel.grid.major.x = element_line(size=0),
+# 		panel.grid.minor.x = element_line(size=0)
+# 	);
+# 	ggsave(plot=pl_MEOECC, file="covidseir_violins.png", height=6, width=12, units="in", dpi=600);
 
 
 
