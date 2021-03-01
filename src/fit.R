@@ -5,83 +5,77 @@ library(rsyncrosim)
 
 library(covidseir)
 
-# 	delayDatasheet - a table of case reporting data, each row representing a unique case
-# 		<symptom onset date>	<case reporting date>	<gap (measured in days)>
-#       Example:    2019-01-01  0.4     0.2
-#                     2020-10-01  0.95    0.2
-#                     2020-11-15  0.45    0.2
-#                     2020-12-15  0.7     0.2
-
 myScenario <- scenario()
 env <- ssimEnvironment()
 
-ymd <- lubridate::ymd
+wParams <- fread(paste(env$TransferDirectory, "modelCovidseir_WeibullParameters.csv", sep="/"))
 
-##################### DUMMY DATA #########################
+# caseData <- data.table(datasheet(myScenario, "epi_DataSummary"))
 
-fitParams <- data.table(NPop=5071000, TimeIncrement=100, NChains=2, NIterations=100, FitType="optimizing", MCMCSeed=42)
-fitPriors <-data.table(R0Prior="2.6,0.2", EPrior="0.8,0.5", StartDecline="15,0.05", EndDecline="22, 0.05", I0Prior="8,1")
+##################### TEMP CODE UNTIL EPI IS RECOMPILED AND RERELEASED ############################
 
-sampFrac <- c(rep(0.14, 13), rep(0.21, 38))
-sampFrac <- c(sampFrac, rep(0.37, nrow(caseData) - length(sampFrac)))
+caseData <- fread("http://www.bccdc.ca/Health-Info-Site/Documents/BCCDC_COVID19_Regional_Summary_Data.csv") %>%
+    separate(col=Date, into=c("date"), sep=' ') %>%
+    mutate_at(vars(date), as.IDate) %>%
+    subset(HA=="All" & Province=="BC") %>%
+    select(date, Cases_Reported) %>%
+    rename(value=Cases_Reported) %>%
+    rename(Timestep=date, Value=value) %>%
+    dplyr::as_tibble()
 
-wParams <- data.table(mleShape=1.6768, mleScale=5.9)
+###################################################################################################
 
-caseData <- datasheet(myScenario, "epi_DataSummary")
 caseData$Timestep <- as.Date(caseData$Timestep)
 
-fSegments <- data.table(Date=c("2019-01-01", "2020-10-01", "2020-11-15", "2020-12-15"), Mean=c(0.4, 0.95, 0.45, 0.7), SD=c(0.2, 0.2, 0.2, 0.2))
+fSegments <- datasheet(myScenario, "modelCovidseir_ContactRateFractions") %>% arrange(BreakDay) %>% data.table
 
-#######################################################
-
-
-# fSegments <- data.table(datasheet(myScenario, "modelCovidseir_FSegments"))
-fSegments$Mean <- sapply(fSegments$Mean, function(x) min(x,1))
-fSegments$Date <- as.Date(fSegments$Date)
-segmentsFilename <- paste(env$TransferDirectory, "SocialDistancingSegments.csv", sep='/')
-write.csv(fSegments, segmentsFilename)
-
-# is there a way of giving the user dropdown menus? I seen this in another package - it would be clutch for the Karlen model selsction too
-
-currentSegment <- 1
 fSeg <- c()
-for(date in caseData$Timestep)
+currentSegment <- 1
+for(daysSince0 in 1:nrow(caseData))
 {
-    if(currentSegment < nrow(fSegments))
-    if(date == fSegments[currentSegment+1, Date])
-    {
-        currentSegment <- currentSegment + 1
-    }
-    fSeg <-c(fSeg, currentSegment)
+    if(currentSegment < nrow(fSegments)){
+    if(daysSince0 == fSegments[currentSegment+1, BreakDay])
+    {  currentSegment <- currentSegment + 1 }}
+
+    fSeg <- c(fSeg, currentSegment)
 }
 fSeg[1] <- 0
 
-# fitParams <-datasheet(myScenario, "modelCovidseir_FitParameters")
-# fitPriors <- datasheet(myScenario, "modelCovidseir_FitPriors")
-# # wParams <- datasheet(myScenario)
+sampFrac <- datasheet(myScenario, "modelCovidseir_SamplingFractions") %>% arrange(Day) %>% data.table()
 
-getMean <- function(x){ return(as.numeric(strsplit(x, ',')[[1]])[1]) }
-getLogMean <- function(x){ return(log(getMean(x))) }
-getSD <- function(x){ return(as.numeric(strsplit(x, ',')[[1]])[2]) }
+proportionTested <- c()
+currentRow <- 1
+for(daysSince0 in 1:nrow(caseData))
+{
+    if(currentRow < nrow(sampFrac))
+    if(daysSince0 == sampFrac[currentRow+1, Day])
+    { currentRow <- currentRow+1 }
 
-fit <- covidseir::fit_seir(
-    # obs_model="NB2",
+    proportionTested <- c(proportionTested, sampFrac[currentRow, Proportion])
+}
+
+genParams <- datasheet(myScenario, "modelCovidseir_General")
+
+theFit <- covidseir::fit_seir(
+    obs_model="NB2",
     daily_cases = caseData$Value,
-    samp_frac_fixed = sampFrac,
+    samp_frac_fixed = proportionTested,
     f_seg = fSeg,
-    R0_prior =  c(getLogMean(fitPriors$R0Prior), getSD(fitPriors$R0Prior)),
-    f_prior = fSegments[, .SD, .SDcols=c("Mean", "SD")],
-    e_prior = c(getMean(fitPriors$EPrior), getSD(fitPriors$EPrior)),
-    start_decline_prior = c(getLogMean(fitPriors$StartDecline), getSD(fitPriors$StartDecline)),
-    end_decline_prior = c(getLogMean(fitPriors$EndDecline), getSD(fitPriors$EndDecline)),
-    chains = fitParams$NChains,
-    iter = fitParams$NIterations,
-    N_pop = fitParams$NPop,
-    i0_prior = c(getLogMean(fitPriors$I0Prior), getSD(fitPriors$I0Prior)),
-    delay_shape = wParams$mleShape, # shape_MLE,
-    delay_scale = wParams$mleScale, # scale_MLE,
-    time_increment = fitParams$TimeIncrement,
-    #######################
+    R0_prior =  c(log(genParams$R0PriorMean), genParams$R0PriorSD),
+    # f_prior = cbind(fSegments$PriorMean, fSegments$PriorSD), # MUST BE A MATRIX, NOT A TABLE
+    e_prior = c(genParams$EPriorMean, genParams$EPriorSD),
+    start_decline_prior = c(log(genParams$StartDeclinePriorMean), genParams$StartDeclinePriorSD),
+    end_decline_prior = c(log(genParams$EndDeclinePriorMean), genParams$EndDeclinePriorSD),
+    chains = 4,
+    iter = 100,
+    N_pop = genParams$NPop,
+    i0_prior = c(log(genParams$I0PriorMean), genParams$I0PriorSD),
+    delay_shape = wParams$mleShape,
+    delay_scale = wParams$mleScale,
+    time_increment = 0.1,
     save_state_predictions = TRUE,
-    fit_type = fitParams$FitType
+    fit_type = if(genParams$FitType==1) "NUTS" else if(genParams$FitType==2) "VB" else "optimizing"
 )
+
+fitFilename <- sprintf("%s\\%s.rds", env$TransferDirectory, genParams$RDS)
+saveRDS(theFit, file=fitFilename)

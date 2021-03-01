@@ -71,6 +71,10 @@
 					</datasheets>
 				</datafeed>
 			</datafeeds>
+			<include>
+				<transformer name="Fit"/>
+				<transformer name="Project"/>
+			</include>
 		</transformer>
 		<transformer
 			name="Fit"
@@ -80,93 +84,149 @@
 			extendsTransformer="epi_Primary"
 			isRunnable ="True">
 			<datafeeds>
-				<!-- <datafeed name="FSegments" displayName="Social distancing break points" dataScope="Scenario">
+				<datafeed name="ContactRateFractions" displayName="Social distancing break points" dataScope="Scenario">
 					<datasheets>
-						<datasheet name="FSegments" displayname="Social distancing break points">
+						<datasheet name="ContactRateFractions" displayname="Social distancing break points">
 							<columns>
 								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
-								<column name="Date" dataType="Date" displayName="Date"/>
-								<column name="Mean" dataType="Double" displayName="Mean"/>
-								<column name="SD" dataType="Double" displayName="Standard Deviation"/>
+								<!-- <column name="BreakDay" dataType="Date" displayName="Breakpoint Day"/> -->
+								<!-- this doesn't ned to be in order -->
+								<column name="BreakDay" dataType="Integer" displayName="Breakpoint Day"/>
+								<column name="PriorMean" dataType="Double" displayName="Prior Mean"/>
+								<column name="PriorSD" dataType="Double" displayName="Prior SD"/>
 							</columns>
+							<defaultRecords>
+								<record columns="BreakDay|PriorMean|PriorSD" values="0|0.4|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="322|0.7|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="247|0.95|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="292|0.45|0.2"/>
+							</defaultRecords>
 						</datasheet>
 					</datasheets>
-				</datafeed> -->
-				<!-- <datafeed name="SampFrac" displayName="Proportion of Cases Sampled" dataScope="Scenario">
+				</datafeed>
+				<datafeed name="SamplingFractions" displayName="Sampling Fractions" dataScope="Scenario">
 					<datasheets>
-						<datasheet name="sampFrac" displayName="Proportion of Cases Sampled">
+						<datasheet name="SamplingFractions" displayName="Sampling Fractions">
 							<columns>
 								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
-								<column name="Date" dataType="Date" displayName="Date"/>
-								<column name="fraction" dataType="Double" displayName="Sampling Fraction"/>
+								<!-- <column name="Date" dataType="Date" displayName="Date"/> -->
+								<!-- this doesn't need to be in order -->
+								<column name="Day" dataType="Integer" displayName="Day"/>
+								<column name="Proportion" dataType="Double" displayName="Sampling Fraction"/>
 							</columns>
+							<defaultRecords>
+								<record columns="Day|Proportion" values="0|0.2"/>
+								<record columns="Day|Proportion" values="24|0.305"/>
+								<record columns="Day|Proportion" values="26|0.67"/>
+								<record columns="Day|Proportion" values="87|0.745"/>
+								<record columns="Day|Proportion" values="130|0.814"/>
+								<record columns="Day|Proportion" values="152|0.628"/>
+								<record columns="Day|Proportion" values="158|0.775"/>
+								<record columns="Day|Proportion" values="181|0.822"/>
+								<record columns="Day|Proportion" values="208|0.134"/>
+								<record columns="Day|Proportion" values="201|0.992"/>
+							</defaultRecords>
 						</datasheet>
 					</datasheets>
-				</datafeed> -->
-				<!-- <datafeed name="FitParameters" displayName="Parameters of the Fitting Function" dataScope="Scenario">
+				</datafeed>
+				<datafeed name="General" displayName="Fitting and Projection Functions Parameters" dataScope="Scenario">
 					<datasheets>
-						<datasheet name="FitParameters" displayName="Parameters of the Fitting Function">
+						<datasheet name="General" displayName="Fitting and Projection Functions Parameters" isSingleRow="True">
 							<columns>
-								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True" isSingleColumn="True"/>
-								<column name="ScenarioID" dataType="Integer"/>
+								<column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
 								<column name="NPop" dataType="Integer" displayName="Population Size"/>
-								<column name="TimeIncrement" dataType="Double" displayName="Time Increment"/>
-								<column name="NChains" dataType="Integer" displayName="Number of MCMC Chains"/>
-								<column name="NIterations" dataType="Integer" displayName="Number of Iterations"/>
-								<column name="FitType" dataType="String" displayName="Type of Fit (optimizing/NUTS)"/>
-								<column name="MCMCSeed" dataType="Integer" displayName="MCMC seed for RStan"/>
+								<column name="I0PriorMean" dataType="Double" displayName="Initial Infected - prior mean"/>
+								<column name="I0PriorSD" dataType="Double" displayName="Initial Infected - prior SD"/>
+								<column name="R0PriorMean" dataType="Double" displayName="R0 - prior mean"/>
+								<column name="R0PriorSD" dataType="Double" displayName="R0 - prior SD"/>
+								<column name="EPriorMean" dataType="Double" displayName="Social distancing fraction - prior mean"/>
+								<column name="EPriorSD" dataType="Double" displayName="Social distancing fraction - prior SD"/>
+								<column name="StartDeclinePriorMean" dataType="Double" displayName="Start decline day - prior mean"/>
+								<column name="StartDeclinePriorSD" dataType="Double" displayName="Start decline day - prior SD"/>
+								<column name="EndDeclinePriorMean" dataType="Double" displayName="End decline day - prior mean"/>
+								<column name="EndDeclinePriorSD" dataType="Double" displayName="End decline day - prior SD"/>
+								<column name="FitType" dataType="Integer" displayName="Fit type" validationType="List" formula1="1:NUTS | 2:VB | 3:optimising"/>
+								<column name="YAML" dataType="String" displayName="Y Advanced settings YAML filename" isExternalFile="True"/>
+								<column name="RDS" dataType="String" displayName="Fit Result RDS Filename"/>
 							</columns>
 							<defaultRecords>
-								<record columns="NPop" values="5071000"/>
-								<record columns="TimeIncrement" values="0.25"/>
-								<record columns="NChains" values="4"/>
-								<record columns="NIterations" values="500"/>
-								<record columns="FitType" values="optimizing"/>
-								<record columns="MCMCSeed" values="42"/>
+								<record columns="NPop|I0PriorMean|I0PriorSD|R0PriorMean|R0PriorSD|EPriorMean|EPriorSD|StartDeclinePriorMean|StartDeclinePriorSD|EndDeclinePriorMean|EndDeclinePriorSD|FitType|RDS" values="5071000|8|1|2.6|0.2|0.8|0.05|15|0.05|22|0.05|3|modelCovidseir_fit"/>
 							</defaultRecords>
 						</datasheet>
 					</datasheets>
-				</datafeed> -->
-				<!-- <datafeed name="FitPriors" displayName="Priors for the Fitting Function (Mean, SD)" dataScope="Scenario">
+				</datafeed>
+			</datafeeds>
+		</transformer>
+		<transformer
+			name="Project"
+			displayName="Covidseir Model - Project"
+			programName="Rscript"
+			programArguments="project.R"
+			extendsTransformer="epi_Primary"
+			isRunnable ="True">
+			<datafeeds>
+				<datafeed name="ProjParams" displayName="Fitting Function Parameters" dataScope="Scenario" isInput="True">
 					<datasheets>
-						<datasheet name="FitPriors" displayName="Priors for the Fitting Function (Mean, SD)">
+						<datasheet name="ProjParams" displayName="Fitting Function Parameters" isSingleRow="True">
 							<columns>
-								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True" isSingleRow="True"/>
-								<column name="ScenarioID" dataType="Integer"/>
-								<column name="R0Prior" dataType="String" displayName="Basic Reproductive Ratio "/>
-								<column name="EPrior" dataType="String" displayName="Fraction of the population social distancing"/>
-								<column name="StartDecline" dataType="String" displayName="Start of social distancing decline (day)"/>
-								<column name="EndDecline" dataType="String" displayName="End of social distancing decline (day)"/>
-								<column name="I0Prior" dataType="String" displayName="Initial number of infected persons"/>
+								<column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="DaysProject" dataType="Integer" displayName="Days to Project"/>
+								<column name="MinIteration" dataType="Integer" displayName="Minimum Iteration"/>
+								<column name="MaxIteration" dataType="Integer" diaplayName="Maximum Iteration"/>
+								<column name="StartChange" dataType="Integer" displayName="Day of social distancing change"/>
+								<!-- this number must be one of the columns of the segment table -->
+								<column name="Resampling" dataType="Integer" displayName="Number of Samples"/>
+								<column name="FSegment" dataType="Integer" displayName="Social distancing segment"/>
+								<column name="Parallel" dataType="Integer" displayName="Parallel processing" validationType="List" formula1="1:Yes|0:No"/>
 							</columns>
 							<defaultRecords>
-								<record columns="R0Prior" values="2.6, 0.2"/>
-								<record columns="EPrior" values="0.8, 0.5"/>
-								<record columns="StartDecline" values="15, 0.05"/>
-								<record columns="EndDecline" values="22, 0.05"/>
-								<record columns="IOPrior" values="8, 1"/>
+								<record columns="DaysProject|MinIteration|MaxIteration|StartChange|Resampling|FSegment|Parallel" values="45|1|50|5|30|1|1"/>
 							</defaultRecords>
 						</datasheet>
 					</datasheets>
-				</datafeed> -->
+				</datafeed>
+				<datafeed name="TidyProj" displayName="Fit to Case Data" dataScope="Scenario" isOutput="True">
+					<datasheets>
+						<datasheet name="TidyProj" displayName="Fit to Case Data">
+							<columns>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="Date" dataType="Date" displayName="Date"/>
+								<column name="Day" dataType="Integer" displayName="Days elapsed"/>
+								<column name="YRepMean" dataType="Double" displayName=""/>
+								<column name="YRep05" dataType="Double" displayName=""/>
+								<column name="YRep25" dataType="Double" displayName=""/>
+								<column name="YRep50" dataType="Double" displayName=""/>
+								<column name="YRep75" dataType="Double" displayName=""/>
+								<column name="YRep95" dataType="Double" displayName=""/>
+								<column name="MuMean" dataType="Double" displayName=""/>
+								<column name="Mu05" dataType="Double" displayName=""/>
+								<column name="Mu25" dataType="Double" displayName=""/>
+								<column name="Mu50" dataType="Double" displayName=""/>
+								<column name="Mu75" dataType="Double" displayName=""/>
+								<column name="Mu95" dataType="Double" displayName=""/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed>
 			</datafeeds>
 		</transformer>
 	</transformers>
 	<layouts>
 		<layout name="coreforms_ScenarioDatafeeds">
 			<item name="ReportingDelays" appendTo="epi_Inputs"/>
-			<!-- <item name="SampFrac" appendTo="epi_Inputs"/> -->
-			<!-- <item name="FSegments" appendTo="epi_Inputs"/> -->
-			<!-- <item name="FitParameters" appendTo="epi_Inputs"/> -->
-			<!-- <item name="FitPriors" appendTo="epi_Inputs"/> -->
+			<item name="ContactRateFractions" appendTo="epi_Inputs"/>
+			<item name="SamplingFractions" appendTo="epi_Inputs"/>
+			<item name="General" appendTo="epi_Inputs"/>
+			<item name="ProjParams" appendTo="epi_Inputs"/>
 			<group name="Datafeeds" displayName="Delay Distribution" appendTo="epi_Outputs">
 				<item name="DelayOutput"/>
 				<item name="DelayData"/>
 				<item name="WeibullParameters"/>
 				<item name="DelayDist"/>
 			</group>
+			<item name="TidyProj" appendTo="epi_Outputs"/>
 		</layout>
 	</layouts>
 </package>
