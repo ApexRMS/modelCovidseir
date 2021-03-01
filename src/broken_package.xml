@@ -1,0 +1,52 @@
+
+
+
+
+
+
+
+
+
+
+				<datafeed name="FitParameters" displayName="Parameters of the Fitting Function" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="FitParameters" displayName="Parameters of the Fitting Function">
+							<columns>
+								<column name="TimeIncrement" dataType="Double" displayName="Time Increment"/>
+								<column name="NChains" dataType="Integer" displayName="Number of MCMC Chains"/>
+								<column name="NIterations" dataType="Integer" displayName="Number of Iterations"/>
+								<column name="MCMCSeed" dataType="Integer" displayName="MCMC seed for RStan"/>
+							</columns>
+							<!-- <defaultRecords>
+								<record columns="NPop" values="5071000"/>
+								<record columns="TimeIncrement" values="0.25"/>
+								<record columns="NChains" values="4"/>
+								<record columns="NIterations" values="500"/>
+								<record columns="FitType" values="optimizing"/>
+								<record columns="MCMCSeed" values="42"/>
+							</defaultRecords> -->
+						</datasheet>
+					</datasheets>
+				</datafeed>
+				<datafeed name="FitPriors" displayName="Priors for the Fitting Function (Mean, SD)" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="FitPriors" displayName="Priors for the Fitting Function (Mean, SD)">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True" isSingleRow="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="R0Prior" dataType="String" displayName="Basic Reproductive Ratio "/>
+								<column name="EPrior" dataType="String" displayName="Fraction of the population social distancing"/>
+								<column name="StartDecline" dataType="String" displayName="Start of social distancing decline (day)"/>
+								<column name="EndDecline" dataType="String" displayName="End of social distancing decline (day)"/>
+							</columns>
+							<!-- <defaultRecords>
+								<record columns="R0Prior" values="2.6, 0.2"/>
+								<record columns="EPrior" values="0.8, 0.5"/>
+								<record columns="StartDecline" values="15, 0.05"/>
+								<record columns="EndDecline" values="22, 0.05"/>
+								<record columns="IOPrior" values="8, 1"/>
+							</defaultRecords> -->
+						</datasheet>
+					</datasheets>
+				</datafeed>
+			</datafeeds>

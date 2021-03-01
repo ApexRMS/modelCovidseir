@@ -25,6 +25,31 @@
       programArguments="project.R"
       extendsTransformer="epi_Primary"
       isRunnable ="True">
+      <datafeeds>
+        <datafeed name="TidyProj" displayName="Fit to Case Data" dataScope="Scenario" isOutput="True">
+          <datasheets>
+            <datasheet name="TidyProj" displayName="Fit to Case Data">
+              <columns>
+                <column name="ScenarioID" dataType="Integer"/>
+                <column name="Date" dataType="Date" displayName="Date"/>
+                <column name="Day" dataType="Integer" displayName="Days elapsed"/>
+                <column name="YRepMean" dataType="Double" displayName=""/>
+                <column name="YRep05" dataType="Double" displayName=""/>
+                <column name="YRep25" dataType="Double" displayName=""/>
+                <column name="YRep50" dataType="Double" displayName=""/>
+                <column name="YRep75" dataType="Double" displayName=""/>
+                <column name="YRep95" dataType="Double" displayName=""/>
+                <column name="MuMean" dataType="Double" displayName=""/>
+                <column name="Mu05" dataType="Double" displayName=""/>
+                <column name="Mu25" dataType="Double" displayName=""/>
+                <column name="Mu50" dataType="Double" displayName=""/>
+                <column name="Mu75" dataType="Double" displayName=""/>
+                <column name="Mu95" dataType="Double" displayName=""/>
+              </columns>
+            </datasheet>
+          </datasheets>
+        </datafeed>
+      </datafeeds>
     </transformer>
   </transformers>
 </package>
