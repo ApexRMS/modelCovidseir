@@ -2,22 +2,24 @@
 <package name="modelCovidseir" displayName="Add-On to the Epidemic Package for the covidSEIR model" isAddOn="True" extendsPackage="epi" version="1.0.0">
 	<transformers>
 		<transformer
-			name="Download"
+			name="modelCovidseir_Download"
 			isPrimary="True"
-			displayName="Download Case Reporting Data"
+			displayName="modelCovidseir_Download"
 			programName="Rscript"
-			programArguments="getDelayData.R"
+			programArguments="gather.R"
 			extendsTransformer="epi_Primary"
 			runContext="LocalOnly"
 			isRunnable="True">
 			<datafeeds>
-				<datafeed name="ReportingDelays" displayName="Case Reporting Delays" dataScope="Scenario">
+				<datafeed name="DelayFileInfo" displayName="rightTruncation Delay Data" dataScope="Scenario">
           <datasheets>
-            <datasheet name="ReportingDelays" displayName="Case Reporting Delays" isSingleRow="True">
+            <datasheet name="DelayFileInfo" displayName="rightTruncation Delay Data" isSingleRow="True">
               <columns>
                 <column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
                 <column name="ScenarioID" dataType="Integer"/>
-                <column name="delayURL" dataType="String" displayName="Delay Data URL"/>
+                <column name="delayURL" dataType="String" displayName="Case Reporting Delay Data URL"/>
+								<column name="DelayDataFile" displayName="Case Reporting Delay Data File" dataType="String" isExternalFile="True"/>
+								<column name="DownloadDateTime" displayName="Download Date/Time" dataType="Date"/>
               </columns>
 							<defaultRecords>
 								<record columns="delayURL" values="https://github.com/andrew-edwards/rightTruncation/raw/master/data/delay_data_2021_01_05.rda"/>
@@ -25,9 +27,9 @@
             </datasheet>
           </datasheets>
         </datafeed>
-				<datafeed name="DelayData" displayName="Case Reporting Delay Data" dataScope="Scenario" isOutput="True">
+				<datafeed name="RawDelayData" displayName="Raw Output" dataScope="Scenario" isOutput="True">
           <datasheets>
-            <datasheet name="DelayData" displayName="Case Reporting Delay Data">
+            <datasheet name="RawDelayData" displayName="Raw Output">
               <columns>
                 <column name="ScenarioID" dataType="Integer"/>
                 <column name="dateReported" dataType="String" displayName="Day on which each case was reported"/>
@@ -37,17 +39,6 @@
             </datasheet>
           </datasheets>
         </datafeed>
-				<datafeed name="DelayOutput" displayName="Delay Data Raw Output" dataScope="Scenario" isOutput="True">
-					<datasheets>
-						<datasheet name="DelayOutput" displayName="Delay Data Raw Output" isSingleRow="True">
-							<columns>
-								<column name="ScenarioID" displayName="Scenario" dataType="Integer"/>
-								<column name="DelayDataFile" displayName="Reporting Delay Data File" dataType="String" isExternalFile="True"/>
-								<column name="DownloadDateTime" displayName="Download Date/Time" dataType="Date"/>
-							</columns>
-						</datasheet>
-					</datasheets>
-				</datafeed>
 				<datafeed name="WeibullParameters" displayName="Weibull Shape and Scale Parameters" dataScope="Scenario" isOutput="True">
 					<datasheets>
 						<datasheet name="WeibullParameters" displayName="Weibull Shape and Scale Parameters" isSingleRow="True">
@@ -59,39 +50,26 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
-				<datafeed name="DelayDist" displayName="Reporting Delay Distribution Parameters" dataScope="Scenario" isOutput="True">
-					<datasheets>
-						<datasheet name="DelayDist" displayName="Reporting Delay Distribution Parameters">
-							<columns>
-								<column name="ScenarioID" dataType="Integer"/>
-								<column name="x" dataType="Double" displayName="x"/>
-								<column name="y" dataType="Double" displayName="y"/>
-							</columns>
-						</datasheet>
-					</datasheets>
-				</datafeed>
 			</datafeeds>
 			<include>
-				<transformer name="Fit"/>
-				<transformer name="Project"/>
+				<transformer name="modelCovidseir_Fit"/>
+				<transformer name="modelCovidseir_Project"/>
 			</include>
 		</transformer>
 		<transformer
-			name="Fit"
-			displayName="Fitting Case Data"
+			name="modelCovidseir_Fit"
+			displayName="modelCovidseir_Fit"
 			programName="Rscript"
 			programArguments="fit.R"
 			extendsTransformer="epi_Primary"
 			isRunnable ="True">
 			<datafeeds>
-				<datafeed name="ContactRateFractions" displayName="Social distancing break points" dataScope="Scenario">
+				<datafeed name="ContactRateFractions" displayName="Contact Rate Fractions" dataScope="Scenario">
 					<datasheets>
-						<datasheet name="ContactRateFractions" displayname="Social distancing break points">
+						<datasheet name="ContactRateFractions" displayname="Contact Rate Fractions">
 							<columns>
 								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
-								<!-- <column name="BreakDay" dataType="Date" displayName="Breakpoint Day"/> -->
-								<!-- this doesn't ned to be in order -->
 								<column name="BreakDay" dataType="Integer" displayName="Breakpoint Day"/>
 								<column name="PriorMean" dataType="Double" displayName="Prior Mean"/>
 								<column name="PriorSD" dataType="Double" displayName="Prior SD"/>
@@ -111,10 +89,8 @@
 							<columns>
 								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
-								<!-- <column name="Date" dataType="Date" displayName="Date"/> -->
-								<!-- this doesn't need to be in order -->
 								<column name="Day" dataType="Integer" displayName="Day"/>
-								<column name="Proportion" dataType="Double" displayName="Sampling Fraction"/>
+								<column name="Proportion" dataType="Double" displayName="Proportion [samp_frac_fixed]"/>
 							</columns>
 							<defaultRecords>
 								<record columns="Day|Proportion" values="0|0.2"/>
@@ -131,24 +107,24 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
-				<datafeed name="General" displayName="Fitting and Projection Functions Parameters" dataScope="Scenario">
+				<datafeed name="General" displayName="General" dataScope="Scenario">
 					<datasheets>
-						<datasheet name="General" displayName="Fitting and Projection Functions Parameters" isSingleRow="True">
+						<datasheet name="General" displayName="General" isSingleRow="True">
 							<columns>
 								<column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
-								<column name="NPop" dataType="Integer" displayName="Population Size"/>
-								<column name="I0PriorMean" dataType="Double" displayName="Initial Infected - prior mean"/>
-								<column name="I0PriorSD" dataType="Double" displayName="Initial Infected - prior SD"/>
-								<column name="R0PriorMean" dataType="Double" displayName="R0 - prior mean"/>
-								<column name="R0PriorSD" dataType="Double" displayName="R0 - prior SD"/>
-								<column name="EPriorMean" dataType="Double" displayName="Social distancing fraction - prior mean"/>
-								<column name="EPriorSD" dataType="Double" displayName="Social distancing fraction - prior SD"/>
-								<column name="StartDeclinePriorMean" dataType="Double" displayName="Start decline day - prior mean"/>
-								<column name="StartDeclinePriorSD" dataType="Double" displayName="Start decline day - prior SD"/>
-								<column name="EndDeclinePriorMean" dataType="Double" displayName="End decline day - prior mean"/>
-								<column name="EndDeclinePriorSD" dataType="Double" displayName="End decline day - prior SD"/>
-								<column name="FitType" dataType="Integer" displayName="Fit type" validationType="List" formula1="1:NUTS | 2:VB | 3:optimising"/>
-								<column name="YAML" dataType="String" displayName="Y Advanced settings YAML filename" isExternalFile="True"/>
+								<column name="NPop" dataType="Integer" displayName="Population size [N_pop]"/>
+								<column name="I0PriorMean" dataType="Double" displayName="Initial Infected - prior mean [i0_prior mean]"/>
+								<column name="I0PriorSD" dataType="Double" displayName="Initial Infected - prior SD [i0_prior SD]"/>
+								<column name="R0PriorMean" dataType="Double" displayName="R0 - prior mean [R0_prior mean]"/>
+								<column name="R0PriorSD" dataType="Double" displayName="R0 - prior SD [R0_prior SD]"/>
+								<column name="EPriorMean" dataType="Double" displayName="Social distancing fraction - prior mean [e_prior mean]"/>
+								<column name="EPriorSD" dataType="Double" displayName="Social distancing fraction - prior SD [e_prior SD]"/>
+								<column name="StartDeclinePriorMean" dataType="Double" displayName="Start decline day - prior mean [start_decline_prior mean]"/>
+								<column name="StartDeclinePriorSD" dataType="Double" displayName="Start decline day - prior SD [start_decline_prior SD]"/>
+								<column name="EndDeclinePriorMean" dataType="Double" displayName="End decline day - prior mean [end_decline_prior mean]"/>
+								<column name="EndDeclinePriorSD" dataType="Double" displayName="End decline day - prior SD [end_decline_prior SD]"/>
+								<column name="FitType" dataType="Integer" displayName="Fit type [fit_type]" validationType="List" formula1="1:NUTS | 2:VB | 3:optimising"/>
+								<column name="YAML" dataType="String" displayName="Advanced settings YAML filename" isExternalFile="True"/>
 								<column name="RDS" dataType="String" displayName="Fit Result RDS Filename"/>
 							</columns>
 							<defaultRecords>
@@ -157,39 +133,9 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
-			</datafeeds>
-		</transformer>
-		<transformer
-			name="Project"
-			displayName="Covidseir Model - Project"
-			programName="Rscript"
-			programArguments="project.R"
-			extendsTransformer="epi_Primary"
-			isRunnable ="True">
-			<datafeeds>
-				<datafeed name="ProjParams" displayName="Fitting Function Parameters" dataScope="Scenario" isInput="True">
+				<datafeed name="FitRawOutput" displayName="Raw Output" dataScope="Scenario" isOutput="True">
 					<datasheets>
-						<datasheet name="ProjParams" displayName="Fitting Function Parameters" isSingleRow="True">
-							<columns>
-								<column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
-								<column name="DaysProject" dataType="Integer" displayName="Days to Project"/>
-								<column name="MinIteration" dataType="Integer" displayName="Minimum Iteration"/>
-								<column name="MaxIteration" dataType="Integer" diaplayName="Maximum Iteration"/>
-								<column name="StartChange" dataType="Integer" displayName="Day of social distancing change"/>
-								<!-- this number must be one of the columns of the segment table -->
-								<column name="Resampling" dataType="Integer" displayName="Number of Samples"/>
-								<column name="FSegment" dataType="Integer" displayName="Social distancing segment"/>
-								<column name="Parallel" dataType="Integer" displayName="Parallel processing" validationType="List" formula1="1:Yes|0:No"/>
-							</columns>
-							<defaultRecords>
-								<record columns="DaysProject|MinIteration|MaxIteration|StartChange|Resampling|FSegment|Parallel" values="45|1|50|5|30|1|1"/>
-							</defaultRecords>
-						</datasheet>
-					</datasheets>
-				</datafeed>
-				<datafeed name="TidyProj" displayName="Fit to Case Data" dataScope="Scenario" isOutput="True">
-					<datasheets>
-						<datasheet name="TidyProj" displayName="Fit to Case Data">
+						<datasheet name="TidyRawOutput" displayName="Raw Output">
 							<columns>
 								<column name="ScenarioID" dataType="Integer"/>
 								<column name="Date" dataType="Date" displayName="Date"/>
@@ -210,23 +156,115 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
+				<datafeed name="FitPosteriors" displayName="Posteriors" dataScope="Scenario" isOutput="True">
+					<datasheets>
+						<datasheet name="FitPosteriors" displayName="Posteriors">
+							<columns>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="Iteration" dataType="Integer" displayName="Iteration"/>
+								<column name="I0Post" dataType="Double" displayName="Initial Infected"/>
+								<column name="R0Post" dataType="Double" displayName="R0"/>
+								<column name="EPost" dataType="Double" displayName="Social distancing fraction"/>
+								<column name="StartDeclinePost" dataType="Double" displayName="Start decline day"/>
+								<column name="EndDeclinePost" dataType="Double" displayName="End decline day"/>
+								<column name="PhiPost" dataType="Double" displayName="Dispersion parameter"/>
+								<column name="FSeg1Post" dataType="Double" displayName="Contact rate fraction 1"/>
+								<column name="FSeg2Post" dataType="Double" displayName="Contact rate fraction 2"/>
+								<column name="FSeg3Post" dataType="Double" displayName="Contact rate fraction 3"/>
+								<column name="FSeg4Post" dataType="Double" displayName="Contact rate fraction 4"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed>
 			</datafeeds>
+		</transformer>
+		<transformer
+		  name="modelCovidseir_Project"
+		  displayName="modelCovidseir_Project"
+		  programName="Rscript"
+		  programArguments="project.R"
+		  extendsTransformer="epi_Primary"
+		  isRunnable ="True">
+		  <datafeeds>
+		    <datafeed name="ProjParams" displayName="Parameters" dataScope="Scenario" isInput="True">
+		      <datasheets>
+		        <datasheet name="ProjParams" displayName="Parameters" isSingleRow="True">
+		          <columns>
+		            <column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
+		            <column name="StartChange" dataType="Integer" displayName="Day of social distancing change"/>
+		            <!-- this number must be one of the columns of the segment table -->
+		            <column name="Resampling" dataType="Integer" displayName="Number of Samples"/>
+		            <column name="FSegment" dataType="Integer" displayName="Social distancing segment"/>
+		            <column name="Parallel" dataType="Integer" displayName="Parallel processing" validationType="List" formula1="1:Yes|0:No"/>
+		          </columns>
+		          <defaultRecords>
+		            <record columns="StartChange|FSegment|Resampling|Parallel" values="5|1|30|1"/>
+		          </defaultRecords>
+		        </datasheet>
+		      </datasheets>
+		    </datafeed>
+				<datafeed name="FitFileInfo" displayName="Fit Data RDS" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="FitFileInfo" displayName="Fit File Data" isSingleRow="True">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="FitDataFile" displayName="Fit Information Object File" dataType="String" isExternalFile="True"/>
+								<column name="MadeDateTime" displayName="Download Date/Time" dataType="Date"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed>
+				<!-- <datafeed name="SimData" displayName="Projection Data" dataScope="Scenario" isOutput="True">
+					<datasheets>
+						<datasheet name="SimData" displayName="Procestion Data" dataScope="Scenario">
+							<columns>
+								<column name="ScenarioID" displayName="Scenario" dataType="Integer"/>
+								<column name="Iteration" dataType="Integer" isOptional="True"/>
+								<column name="Timestep" displayName="Date" dataType="Date" validationType="Date" isOptional="True"/>
+								<column name="Variable" dataType="Integer" validationType="Datasheet" formula1="Variable" allowDbNull="False"/>
+								<column name="Jurisdiction" dataType="Integer" validationType="Datasheet" formula1="Jurisdiction" allowDbNull="False"/>
+								<column name="AgeMin" displayName="Age Min" dataType="Integer" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="0" isOptional="True"/>
+								<column name="AgeMax" displayName="Age Max" dataType="Integer" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="0" isOptional="True"/>
+								<column name="Sex" dataType="Integer" validationType="List" formula1="0:Male|1:Female" isOptional="True"/>
+								<column name="Value" dataType="Double" allowDbNull="False"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed> -->
+		  </datafeeds>
 		</transformer>
 	</transformers>
 	<layouts>
 		<layout name="coreforms_ScenarioDatafeeds">
-			<item name="ReportingDelays" appendTo="epi_Inputs"/>
-			<item name="ContactRateFractions" appendTo="epi_Inputs"/>
-			<item name="SamplingFractions" appendTo="epi_Inputs"/>
-			<item name="General" appendTo="epi_Inputs"/>
-			<item name="ProjParams" appendTo="epi_Inputs"/>
-			<group name="Datafeeds" displayName="Delay Distribution" appendTo="epi_Outputs">
-				<item name="DelayOutput"/>
-				<item name="DelayData"/>
-				<item name="WeibullParameters"/>
-				<item name="DelayDist"/>
+			<item name="DelayFileInfo" displayName="rightTruncation Delay Data" appendTo="epi_Sources"/>
+			<item name="FitFileInfo" displayName="modelCovidseir Fit Object File" appendTo="epi_Sources"/>
+			<group name='CovidSeir' displayName="CovidSeir" appendTo="epi_Models">
+				<group name="DelayData" displayName="Case Reporting Delays" appendTo="CovidSeir">
+					<item name="RawDelayData"/>
+					<item name="WeibullParameters"/>
+				</group>
+				<group name="FitModel" displayName="Fit Model" appendTo="CovidSeir">
+					<group name="FitInputs" displayName="Inputs" appendTo="FitModel">
+						<item name="General"/>
+						<item name="SamplingFractions"/>
+						<item name="ContactRateFractions"/>
+					</group>
+					<group name="FitOutputs" displayName="Outputs" appendTo="FitModel">
+						<!-- <item name="FitRawOutput"/> -->
+						<item name="FitPosteriors"/>
+					</group>
+				</group>
+				<group name="Projection" displayName="Projection" appendTo="CovidSeir">
+					<item name="ProjParams"/>
+				</group>
 			</group>
-			<item name="TidyProj" appendTo="epi_Outputs"/>
 		</layout>
+		<!-- <item name="Variable" datasheet="SimData" column="Value" variableSourceColumn="Variable" prefixFolderName="False" appendTo="epi_Variables"/> -->
+		<!-- <layout name="modelCovidseir_Charts" configurationSheet="RunControl" xAxisLabelFormat="yyyy-MMM-dd">
+			<group name="Variables" dataSheet="DataSummary" filter="Jurisdiction">
+				<item name="Variable" dataSheet="DataSummary" column="Value" variableSourceColumn="Variable" prefixFolderName="False"/>
+			</group>
+		</layout> -->
 	</layouts>
 </package>

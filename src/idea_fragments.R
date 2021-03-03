@@ -66,3 +66,18 @@ for(date in sapply(caseData$Timestep, function(x) toString(x)))
 
     caseData[Timestep==date, sampfrac] <- min(1, numer/denom)
 }
+
+# smooth Weibull curve to be superimposed
+weibullX <- seq(min(delayData$time_to_report), max(delayData$time_to_report), by=0.05)
+theDist <- data.table(x = weibullX, y = nrow(delayData)*dweibull(weibullX, shape=mleShape, scale=mleScale))
+
+weibullDist <- datasheet(myScenario, "modelCovidseir_DelayDist")
+weibullDist[length(weibullX),] <-NA
+weibullDist$x <- theDist$x
+weibullDist$y <- theDist$y
+saveDatasheet(myScenario, weibullDist, "modelCovidseir_DelayDist")
+
+subset(
+       "2020-08-01" < symptom_onset_date &
+           reported_date < "2020-12-01"
+   )

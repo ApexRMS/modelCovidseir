@@ -8,23 +8,9 @@ library(covidseir)
 myScenario <- scenario()
 env <- ssimEnvironment()
 
-wParams <- fread(paste(env$TransferDirectory, "modelCovidseir_WeibullParameters.csv", sep="/"))
+wParams <- datasheet(myScenario, "modelCovidseir_WeibullParameters")
 
-# caseData <- data.table(datasheet(myScenario, "epi_DataSummary"))
-
-##################### TEMP CODE UNTIL EPI IS RECOMPILED AND RERELEASED ############################
-
-caseData <- fread("http://www.bccdc.ca/Health-Info-Site/Documents/BCCDC_COVID19_Regional_Summary_Data.csv") %>%
-    separate(col=Date, into=c("date"), sep=' ') %>%
-    mutate_at(vars(date), as.IDate) %>%
-    subset(HA=="All" & Province=="BC") %>%
-    select(date, Cases_Reported) %>%
-    rename(value=Cases_Reported) %>%
-    rename(Timestep=date, Value=value) %>%
-    dplyr::as_tibble()
-
-###################################################################################################
-
+caseData <- data.table(datasheet(myScenario, "epi_DataSummary"))
 caseData$Timestep <- as.Date(caseData$Timestep)
 
 fSegments <- datasheet(myScenario, "modelCovidseir_ContactRateFractions") %>% arrange(BreakDay) %>% data.table
@@ -56,18 +42,20 @@ for(daysSince0 in 1:nrow(caseData))
 
 genParams <- datasheet(myScenario, "modelCovidseir_General")
 
+runControl <- datasheet(myScenario, "epi_RunControl")
+
 theFit <- covidseir::fit_seir(
     obs_model="NB2",
     daily_cases = caseData$Value,
     samp_frac_fixed = proportionTested,
-    f_seg = fSeg,
-    R0_prior =  c(log(genParams$R0PriorMean), genParams$R0PriorSD),
+    # f_seg = fSeg,
     # f_prior = cbind(fSegments$PriorMean, fSegments$PriorSD), # MUST BE A MATRIX, NOT A TABLE
+    R0_prior =  c(log(genParams$R0PriorMean), genParams$R0PriorSD),
     e_prior = c(genParams$EPriorMean, genParams$EPriorSD),
     start_decline_prior = c(log(genParams$StartDeclinePriorMean), genParams$StartDeclinePriorSD),
     end_decline_prior = c(log(genParams$EndDeclinePriorMean), genParams$EndDeclinePriorSD),
     chains = 4,
-    iter = 100,
+    iter = runControl$MaximumIteration,
     N_pop = genParams$NPop,
     i0_prior = c(log(genParams$I0PriorMean), genParams$I0PriorSD),
     delay_shape = wParams$mleShape,
@@ -77,5 +65,23 @@ theFit <- covidseir::fit_seir(
     fit_type = if(genParams$FitType==1) "NUTS" else if(genParams$FitType==2) "VB" else "optimizing"
 )
 
-fitFilename <- sprintf("%s\\%s.rds", env$TransferDirectory, genParams$RDS)
+fitFilename <- sprintf("%s\\%s.rds", env$TempDirectory, genParams$RDS)
 saveRDS(theFit, file=fitFilename)
+
+fitPosteriors <- datasheet(myScenario, "modelCovidseir_FitPosteriors")
+fitPosteriors[runControl$MaximumIteration,] <- NA
+fitPosteriors$Iteration <- 1:runControl$MaximumIteration
+fitPosteriors$I0Post <- theFit$post$i0
+fitPosteriors$R0Post <- theFit$post$R0
+fitPosteriors$EPost <- theFit$post$e
+fitPosteriors$StartDeclinePost <- theFit$post$start_decline
+fitPosteriors$EndDeclinePost <- theFit$post$end_decline
+fitPosteriors$PhiPost <- theFit$post$phi[,1]
+fitPosteriors$FSeg1Post <- theFit$post$f_s[,1]
+# fitPosteriors$FSeg2Post <-theFit$post$f_s[,2]
+# fitPosteriors$FSeg3Post <-theFit$post$f_s[,3]
+# fitPosteriors$FSeg4Post <-theFit$post$f_s[,4]
+fitPosteriors$FSeg2Post <- NULL
+fitPosteriors$FSeg3Post <- NULL
+fitPosteriors$FSeg4Post <- NULL
+saveDatasheet(myScenario, fitPosteriors, "modelCovidseir_FitPosteriors")
