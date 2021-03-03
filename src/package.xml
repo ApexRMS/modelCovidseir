@@ -215,23 +215,23 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
-				<!-- <datafeed name="SimData" displayName="Projection Data" dataScope="Scenario" isOutput="True">
+				<datafeed name="SimData" displayName="Projection Data" dataScope="Scenario" isOutput="True">
 					<datasheets>
-						<datasheet name="SimData" displayName="Procestion Data" dataScope="Scenario">
+						<datasheet name="SimData" displayName="Projection Data">
 							<columns>
 								<column name="ScenarioID" displayName="Scenario" dataType="Integer"/>
-								<column name="Iteration" dataType="Integer" isOptional="True"/>
-								<column name="Timestep" displayName="Date" dataType="Date" validationType="Date" isOptional="True"/>
-								<column name="Variable" dataType="Integer" validationType="Datasheet" formula1="Variable" allowDbNull="False"/>
-								<column name="Jurisdiction" dataType="Integer" validationType="Datasheet" formula1="Jurisdiction" allowDbNull="False"/>
-								<column name="AgeMin" displayName="Age Min" dataType="Integer" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="0" isOptional="True"/>
-								<column name="AgeMax" displayName="Age Max" dataType="Integer" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="0" isOptional="True"/>
-								<column name="Sex" dataType="Integer" validationType="List" formula1="0:Male|1:Female" isOptional="True"/>
-								<column name="Value" dataType="Double" allowDbNull="False"/>
+								<column name="Iteration" dataType="Integer" displayName="Iteration"/>
+								<column name="Timestep" dataType="Date" displayName="Timestep"/>
+								<column name="Variable" dataType="String" displayName="Variable"/>
+								<column name="Jurisdiction" dataType="String" displayName="Jurisdiction" />
+								<column name="AgeMin" displayName="Age Min" dataType="Integer"/>
+								<column name="AgeMax" displayName="Age Max" dataType="Integer"/>
+								<column name="Sex" dataType="Integer" displayName="Sex"/>
+								<column name="Value" dataType="Double" displayName="Value"/>
 							</columns>
 						</datasheet>
 					</datasheets>
-				</datafeed> -->
+				</datafeed>
 		  </datafeeds>
 		</transformer>
 	</transformers>
@@ -257,6 +257,7 @@
 				</group>
 				<group name="Projection" displayName="Projection" appendTo="CovidSeir">
 					<item name="ProjParams"/>
+					<item name="SimData"/>
 				</group>
 			</group>
 		</layout>
