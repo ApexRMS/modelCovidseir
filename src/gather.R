@@ -9,21 +9,23 @@ env <- ssimEnvironment()
 
 inputSheet <- datasheet(myScenario, "modelCovidseir_DelayFileInfo")
 
+# will write the delay data to this sheet
 outputSheet <- datasheet(myScenario, "modelCovidseir_DelayFileInfo", empty = T)
 outputSheet[1,] <- NA
 outputSheet <- transform(outputSheet, DelayDownloadDateTime = as.character(DelayDownloadDateTime), WeibullDownloadDateTime = as.character(WeibullDownloadDateTime))
 
+# read the rda file from the Andersen Github
 rdaFileName <- paste(env$TempDirectory, "delayData.rda", sep='/')
 download.file(
     gsub(' ', '', inputSheet$delayURL, fixed = TRUE),
     destfile=rdaFileName,
     quiet = TRUE
 )
-
+# mutate the data
 delayData <- get(load(rdaFileName)) %>%
     data.table() %>%
     mutate_at(vars(time_to_report), as.integer)
-
+# write  the delay data to file and log the name/time
 delayDataFilename <- paste(env$TransferDirectory, "CaseReportingDelayData.csv", sep='/')
 write.csv(delayData, delayDataFilename)
 
@@ -31,12 +33,15 @@ outputSheet$DelayDataFile <-delayDataFilename
 outputSheet$delayURL <- inputSheet$delayURL
 outputSheet$DelayDownloadDateTime <- as.character(Sys.time())
 
+# save to output sheet
 delayDatasheet <- datasheet(myScenario, "modelCovidseir_RawDelayData", empty=T)
 delayDatasheet[nrow(delayData), ] <- NA
 delayDatasheet$dateReported <- delayData$reported_date
 delayDatasheet$dateSymptom <- delayData$symptom_onset_date
 delayDatasheet$reportingGap <- delayData$time_to_report
 saveDatasheet(myScenario, delayDatasheet, "modelCovidseir_RawDelayData")
+
+# time for a Weibull distribution
 
 # set the first day so that we can calculate the time that passed in days
 hDay0 <- min(delayData$symptom_onset_date)
@@ -63,6 +68,7 @@ mleRes = suppressWarnings(nlm(
 mleShape <- mleRes$estimate[1]
 mleScale <- mleRes$estimate[2]
 
+# data sheets and file information
 wParams <- datasheet(myScenario, "modelCovidseir_WeibullParameters", empty=T)
 wParams[1,] <- NA
 wParams$mleShape <- mleShape

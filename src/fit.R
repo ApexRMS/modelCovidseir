@@ -8,11 +8,13 @@ library(covidseir)
 myScenario <- scenario()
 env <- ssimEnvironment()
 
+# get the BC case data
 caseData <- data.table(datasheet(myScenario, "epi_DataSummary"))
 caseData$Timestep <- as.Date(caseData$Timestep)
 
+# fetch the contact rate segments from the input table
 fSegments <- datasheet(myScenario, "modelCovidseir_ContactRateFractions") %>% arrange(BreakDay) %>% data.table
-
+ # turn the contact rate table into a series of indexes for the fitting function
 fSeg <- c()
 currentSegment <- 1
 for(daysSince0 in 1:nrow(caseData))
@@ -25,8 +27,9 @@ for(daysSince0 in 1:nrow(caseData))
 }
 fSeg[1] <- 0
 
+# get the sampling rates from the input table
 sampFrac <- datasheet(myScenario, "modelCovidseir_SamplingFractions") %>% arrange(Day) %>% data.table()
-
+# turn the table into a per time step list of ratios
 proportionTested <- c()
 currentRow <- 1
 for(daysSince0 in 1:nrow(caseData))
@@ -38,10 +41,11 @@ for(daysSince0 in 1:nrow(caseData))
     proportionTested <- c(proportionTested, sampFrac[currentRow, Proportion])
 }
 
+# general fitting function parameters
 genParams <- datasheet(myScenario, "modelCovidseir_General")
-
+# project-level run control
 runControl <- datasheet(myScenario, "epi_RunControl")
-
+# shape and scale parameters for the case reporting delay Weibull distribution
 wParams <- datasheet(myScenario, "modelCovidseir_WeibullParameters")
 
 numIter <- runControl$MaximumIteration
@@ -53,6 +57,7 @@ theFit <- covidseir::fit_seir(
     daily_cases = caseData$Value,
     samp_frac_fixed = proportionTested,
     f_seg = fSeg,
+    # this argument is disabled because of a frequent obscure error
     # f_prior = cbind(fSegments$PriorMean, fSegments$PriorSD), # MUST BE A MATRIX, NOT A TABLE
     R0_prior =  c(log(genParams$R0PriorMean), genParams$R0PriorSD),
     e_prior = c(genParams$EPriorMean, genParams$EPriorSD),
@@ -69,15 +74,18 @@ theFit <- covidseir::fit_seir(
     fit_type = if(genParams$FitType==1) "NUTS" else if(genParams$FitType==2) "VB" else "optimizing"
 )
 
+# save the fit object to a file
 fitFilename <- sprintf("%s\\%s.rds", env$TempDirectory, genParams$RDS)
 saveRDS(theFit, file=fitFilename)
 
+# log the time and location info for the output file
 fitFileInfo <- datasheet(myScenario, "modelCovidseir_FitFileInfo")
 fitFileInfo[1,] <- NA
 fitFileInfo$FitDataFile <-fitFilename
 fitFileInfo$MadeDateTime <- as.character(Sys.time())
 saveDatasheet(myScenario, fitFileInfo, "modelCovidseir_FitFileInfo")
 
+# save the posterior parameter values
 genPosteriors <- datasheet(myScenario, "modelCovidseir_PostsGeneral")
 genPosteriors[numIter,] <- NA
 genPosteriors$Iteration <- 1:numIter
@@ -89,6 +97,7 @@ genPosteriors$EndDeclinePost <- theFit$post$end_decline
 genPosteriors$PhiPost <- theFit$post$phi[,1]
 saveDatasheet(myScenario, genPosteriors, "modelCovidseir_PostsGeneral")
 
+# committing the contact rate posteriors to their own data sheet
 contactPosts <- datasheet(myScenario, "modelCovidseir_PostsContactRates", empty=T)
 contactPosts[numIter*nrow(fSegments)+1,] <- NA
 

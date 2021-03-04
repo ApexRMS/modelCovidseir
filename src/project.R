@@ -5,6 +5,7 @@ library(rsyncrosim)
 
 library(covidseir)
 
+# allowing parallel processing
 future::plan(future::multisession)
 
 myScenario <- scenario()
@@ -14,23 +15,29 @@ genParams <- datasheet(myScenario, "modelCovidseir_General")
 projParams <- datasheet(myScenario, "modelCovidseir_ProjParams")
 runControl <- datasheet(myScenario, "epi_RunControl")
 
+# if max iteration not given in the table by the user, we set it here
 maxIteration <- runControl$MaximumIteration
-if(length(maxIteration)==0){ maxIteration <- 10 }
-if(is.na(maxIteration)){ maxIteration <- 10 }
+if(length(maxIteration)==0){ maxIteration <- 100 }
+if(is.na(maxIteration)){ maxIteration <- 100 }
 
+# BC case data
 caseData <- datasheet(myScenario, "epi_DataSummary") %>% transform(Timestep = as.Date(Timestep))
 
+# if the end day of the projection is not given by the user, default to 45 days
 maxTimeStep <- runControl$MaximumTimestep
 if(length(maxTimeStep)==0){ maxTimeStep <- max(caseData$Timestep) + 45 }
 if(is.na(maxTimeStep)){ maxTimeStep <- max(caseData$Timestep) + 45 }
 
+# calculate the duration and extension of the simulation
 totalDuration <- (as.Date(maxTimeStep) - min(caseData$Timestep))[[1]]
 daysToProject <-(as.Date(maxTimeStep) - as.Date(max(caseData$Timestep)))[[1]]
-
+ # if no projection is requested, fail
 if((daysToProject<=0) | (is.na(daysToProject))) stop()
 
+# importing the fit object from the fitting step
 theFit <- readRDS(sprintf("%s\\%s.rds", env$TempDirectory, genParams$RDS))
 
+# parameters used for the projection function
 projParams <- datasheet(myScenario, "modelCovidseir_ProjParams")
 
 # in the case of a huge number of iterations,we'll have a table already set up
@@ -41,6 +48,7 @@ lut <- dplyr::tibble(
     date = seq(firstDay, firstDay + length(day) - 1, by = "1 day")
 )
 
+# read the standard output table
 simData <- datasheet(myScenario, "epi_DataSummary", empty = T, optional = T, lookupsAsFactors = F)
 # simData$Iteration <- numeric(0)
 # simData$Timestep <- numeric(0)
@@ -49,11 +57,14 @@ simData$AgeMin <- NULL
 simData$AgeMax <- NULL
 simData$Sex <- NULL
 
+# I tried to get a progress bar, but it's not functioning
 envBeginSimulation(maxIteration)
 
 for(index in 1:maxIteration)
 {
     envReportProgress(1, index)
+
+		# do the projection
     theProj <- covidseir::project_seir(
         theFit,
         iter = 1:1,
@@ -63,10 +74,10 @@ for(index in 1:maxIteration)
         f_multi_seg = projParams$FSegment,
         parallel = (projParams$Parallel=="Yes")
     )
-
+		# resample for smoother results
     tidyProj <- covidseir::tidy_seir(theProj, resample_y_rep = projParams$Resampling)
     tidyProj <- dplyr::left_join(tidyProj, lut, by = "day")
-
+		# copy the results of each iteration to a datasheet
     for(projRow in 1:nrow(theProj))
     {
         simData <- addRow(simData, value=c(
@@ -82,6 +93,7 @@ for(index in 1:maxIteration)
 
 envEndSimulation()
 
+# cast the Date column to IDate (that seems to work for the dataBcCdc package) and save the sheet
 simData <- transform(simData, Timestep=as.IDate(Timestep))
 
 saveDatasheet(myScenario, simData, name = "epi_DataSummary", append = F)
