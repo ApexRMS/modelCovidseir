@@ -60,7 +60,7 @@ simData$Sex <- NULL
 # I tried to get a progress bar, but it's not functioning
 envBeginSimulation(maxIteration)
 
-for(index in 1:5) #maxIteration)
+for(index in 1:maxIteration)
 {
     envReportProgress(1, index)
 
