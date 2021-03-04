@@ -14,45 +14,53 @@ genParams <- datasheet(myScenario, "modelCovidseir_General")
 projParams <- datasheet(myScenario, "modelCovidseir_ProjParams")
 runControl <- datasheet(myScenario, "epi_RunControl")
 
+maxIteration <- runControl$MaximumIteration
+if(length(maxIteration)==0){ maxIteration <- 10 }
+if(is.na(maxIteration)){ maxIteration <- 10 }
+
 caseData <- datasheet(myScenario, "epi_DataSummary") %>% transform(Timestep = as.Date(Timestep))
 
-totalDuration <- (as.Date(runControl$MaximumTimestep) - min(caseData$Timestep))[[1]]
-daysToProject <-(as.Date(runControl$MaximumTimestep) - as.Date(max(caseData$Timestep)))[[1]]
+maxTimeStep <- runControl$MaximumTimestep
+if(length(maxTimeStep)==0){ maxTimeStep <- max(caseData$Timestep) + 45 }
+if(is.na(maxTimeStep)){ maxTimeStep <- max(caseData$Timestep) + 45 }
 
-# change to
-theFit <-readRDS(sprintf("%s\\%s.rds", env$TempDirectory, genParams$RDS))
+totalDuration <- (as.Date(maxTimeStep) - min(caseData$Timestep))[[1]]
+daysToProject <-(as.Date(maxTimeStep) - as.Date(max(caseData$Timestep)))[[1]]
 
 if((daysToProject<=0) | (is.na(daysToProject))) stop()
 
+theFit <- readRDS(sprintf("%s\\%s.rds", env$TempDirectory, genParams$RDS))
+
 projParams <- datasheet(myScenario, "modelCovidseir_ProjParams")
 
-simData <- data.table(matrix(ncol=3, nrow=(totalDuration+1)*runControl$MaximumIteration))
-names(simData) <-c("Iteration", "Date", "simCases")
-simData[, Iteration:=as.integer(Iteration)]
-simData[, Date:=as.Date(Date)]
-simData[, simCases:=as.numeric(simCases)]
-
 # in the case of a huge number of iterations,we'll have a table already set up
-rowCounter <- 1
 firstDay <- min(caseData$Timestep, na.rm=TRUE)
-lastDay <- totalDuration
+lastDay <- totalDuration + 10
 lut <- dplyr::tibble(
     day = seq_len(lastDay),
     date = seq(firstDay, firstDay + length(day) - 1, by = "1 day")
 )
 
-simData <- datasheet(myScenario, name = "epi_DataSummary", empty = T, optional = T, lookupsAsFactors = F)
-simData <- transform(simData, Timestep = as.Date(Timestep))
+simData <- datasheet(myScenario, "epi_DataSummary", empty = T, optional = T, lookupsAsFactors = F)
+# simData$Iteration <- numeric(0)
+# simData$Timestep <- numeric(0)
+simData <- simData %>% transform(Timestep=as.Date(Timestep))
+simData$AgeMin <- NULL
+simData$AgeMax <- NULL
+simData$Sex <- NULL
 
-for(index in 1:runControl$MaximumIteration)
+envBeginSimulation(maxIteration)
+
+for(index in 1:maxIteration)
 {
+    envReportProgress(1, index)
     theProj <- covidseir::project_seir(
         theFit,
         iter = 1:1,
-        forecast_days = daysToProject, # number of days into the future to predict
-        f_fixed_start = max(theFit$days) + projParams$StartChange, # the day at which to start changing f
+        forecast_days = daysToProject,
+        f_fixed_start = max(theFit$days) + projParams$StartChange,
         f_multi = rep(1.1, daysToProject - projParams$StartChange + 1),
-        f_multi_seg = projParams$FSegment, # which f segment to use
+        f_multi_seg = projParams$FSegment,
         parallel = (projParams$Parallel=="Yes")
     )
 
@@ -69,29 +77,11 @@ for(index in 1:runControl$MaximumIteration)
             Iteration = index
         ))
     }
-
-    # startRow <- min(which(is.na(simData$Iteration)))
-    # simData[startRow:(startRow+totalDuration), Iteration:=index]
-    # simData[startRow:(startRow+totalDuration), Date:=tidyProj$date]
-    # simData[startRow:(startRow+totalDuration), simCases:=tidyProj$y_rep_mean]
-
+    envStepSimulation()
 }
 
-simData <-transform(simData, TImestep = as.character(Timestep))
+envEndSimulation()
+
+simData <- transform(simData, Timestep=as.IDate(Timestep))
 
 saveDatasheet(myScenario, simData, name = "epi_DataSummary", append = F)
-saveDatasheet(myScenario, simData, name = "modelCovidseir_SimData", append = F)
-
-
-# simData <-na.omit(simData)
-# theFinal <- datasheet(myScenario, "epi_DataSummary", empty=T)
-# theFinal[nrow(simData),] <- NA
-# theFinal$Variable <- "Cases"
-# theFinal$Jurisdiction <- "Canada - British Columbia"
-# theFinal$Value <-simData$simCases
-# theFinal$Timestep <-simData$Date
-# theFinal$Iteration <-simData$Iteration
-# saveDatasheet(myScenario, theFinal, "epi_DataSummary")
-#
-# simDataFilename <-sprintf("%s\\simData.csv", env$TransferDirectory)
-# write.csv(simData, simDataFilename, row.names=F)

@@ -8,12 +8,14 @@ myScenario <- scenario()
 env <- ssimEnvironment()
 
 inputSheet <- datasheet(myScenario, "modelCovidseir_DelayFileInfo")
-# put in some code to read a file if the name is given
-downloadURL <- inputSheet$delayURL
+
+outputSheet <- datasheet(myScenario, "modelCovidseir_DelayFileInfo", empty = T)
+outputSheet[1,] <- NA
+outputSheet <- transform(outputSheet, DelayDownloadDateTime = as.character(DelayDownloadDateTime), WeibullDownloadDateTime = as.character(WeibullDownloadDateTime))
 
 rdaFileName <- paste(env$TempDirectory, "delayData.rda", sep='/')
 download.file(
-    gsub(' ', '', downloadURL, fixed = TRUE),
+    gsub(' ', '', inputSheet$delayURL, fixed = TRUE),
     destfile=rdaFileName,
     quiet = TRUE
 )
@@ -25,10 +27,9 @@ delayData <- get(load(rdaFileName)) %>%
 delayDataFilename <- paste(env$TransferDirectory, "CaseReportingDelayData.csv", sep='/')
 write.csv(delayData, delayDataFilename)
 
-outputSheet <- datasheet(myScenario, "modelCovidseir_DelayFileInfo", empty = T)
-outputSheet <- transform(outputSheet, DownloadDateTime = as.character(DownloadDateTime))
-outputSheet[1,] <- list(inputSheet$delayURL, "CaseReportingDelayData.csv", as.character(Sys.time()))
-saveDatasheet(myScenario, outputSheet, "modelCovidseir_DelayFileInfo")
+outputSheet$DelayDataFile <-delayDataFilename
+outputSheet$delayURL <- inputSheet$delayURL
+outputSheet$DelayDownloadDateTime <- as.character(Sys.time())
 
 delayDatasheet <- datasheet(myScenario, "modelCovidseir_RawDelayData", empty=T)
 delayDatasheet[nrow(delayData), ] <- NA
@@ -68,4 +69,11 @@ wParams$mleShape <- mleShape
 wParams$mleScale <- mleScale
 saveDatasheet(myScenario, wParams, "modelCovidseir_WeibullParameters")
 
-write.csv(wParams, paste(env$TempDirectory, "modelCovidseir_WeibullParameters.csv", sep="/"), row.names=FALSE)
+weibullFilename <- paste(env$TempDirectory, "modelCovidseir_WeibullParameters.csv", sep="/")
+
+write.csv(wParams, weibullFilename, row.names=FALSE)
+
+outputSheet$WeibullDataFile <- weibullFilename
+outputSheet$WeibullDownloadDateTime <- as.character(Sys.time())
+
+saveDatasheet(myScenario, outputSheet, "modelCovidseir_DelayFileInfo")

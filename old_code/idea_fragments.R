@@ -81,3 +81,60 @@ subset(
        "2020-08-01" < symptom_onset_date &
            reported_date < "2020-12-01"
    )
+
+   <!-- <datafeed name="FitRawOutput" displayName="Raw Output" dataScope="Scenario" isOutput="True">
+     <datasheets>
+       <datasheet name="TidyRawOutput" displayName="Raw Output">
+         <columns>
+           <column name="ScenarioID" dataType="Integer"/>
+           <column name="Date" dataType="Date" displayName="Date"/>
+           <column name="Day" dataType="Integer" displayName="Days elapsed"/>
+           <column name="YRepMean" dataType="Double" displayName=""/>
+           <column name="YRep05" dataType="Double" displayName=""/>
+           <column name="YRep25" dataType="Double" displayName=""/>
+           <column name="YRep50" dataType="Double" displayName=""/>
+           <column name="YRep75" dataType="Double" displayName=""/>
+           <column name="YRep95" dataType="Double" displayName=""/>
+           <column name="MuMean" dataType="Double" displayName=""/>
+           <column name="Mu05" dataType="Double" displayName=""/>
+           <column name="Mu25" dataType="Double" displayName=""/>
+           <column name="Mu50" dataType="Double" displayName=""/>
+           <column name="Mu75" dataType="Double" displayName=""/>
+           <column name="Mu95" dataType="Double" displayName=""/>
+         </columns>
+       </datasheet>
+     </datasheets>
+   </datafeed> -->
+
+   <column name="FSeg1Post" dataType="Double" displayName="Contact rate fraction 1"/>
+   <column name="FSeg2Post" dataType="Double" displayName="Contact rate fraction 2"/>
+   <column name="FSeg3Post" dataType="Double" displayName="Contact rate fraction 3"/>
+   <column name="FSeg4Post" dataType="Double" displayName="Contact rate fraction 4"/>
+
+
+   datafeed name="FitFileInfo" displayName="Fit Data RDS" dataScope="Scenario">
+   	<datasheets>
+   		<datasheet name="FitFileInfo" displayName="Fit File Data" isSingleRow="True">
+   			<columns>
+   				<column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
+   				<column name="ScenarioID" dataType="Integer"/>
+   				<column name="FitDataFile" displayName="Fit Information Object File" dataType="String" isExternalFile="True"/>
+   				<column name="MadeDateTime" displayName="Download Date/Time" dataType="Date"/>
+   			</columns>
+   		</datasheet>
+   	</datasheets>
+   </datafeed>
+
+   <!-- <item name="Variable" datasheet="SimData" column="Value" variableSourceColumn="Variable" prefixFolderName="False" appendTo="epi_Variables"/> -->
+   <!-- <layout name="modelCovidseir_Charts" configurationSheet="RunControl" xAxisLabelFormat="yyyy-MMM-dd">
+   	<group name="Variables" dataSheet="DataSummary" filter="Jurisdiction">
+   		<item name="Variable" dataSheet="DataSummary" column="Value" variableSourceColumn="Variable" prefixFolderName="False"/>
+   	</group>
+   </layout> -->
+
+   # simData <- datasheet(myScenario, name = "epi_DataSummary", empty = T, optional = T, lookupsAsFactors = F)
+# simData <- transform(simData, Timestep = as.Date(Timestep))
+#
+# simData <- data.table(matrix(ncol=8, nrow=maxIteration*totalDuration))
+# names(simData) <-
+# simData[, Iteration:=as.integer(Iteration)]
