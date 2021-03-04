@@ -60,7 +60,7 @@ simData$Sex <- NULL
 # I tried to get a progress bar, but it's not functioning
 envBeginSimulation(maxIteration)
 
-for(index in 1:maxIteration)
+for(index in 1:5) #maxIteration)
 {
     envReportProgress(1, index)
 
@@ -70,8 +70,10 @@ for(index in 1:maxIteration)
         iter = 1:1,
         forecast_days = daysToProject,
         f_fixed_start = max(theFit$days) + projParams$StartChange,
-        f_multi = rep(1.1, daysToProject - projParams$StartChange + 1),
+        f_multi = rep(projParams$Multiplic, daysToProject - projParams$StartChange + 1),
         f_multi_seg = projParams$FSegment,
+        imported_cases = projParams$Imports,
+        imported_window = projParams$ImportWindow,
         parallel = (projParams$Parallel=="Yes")
     )
 		# resample for smoother results
