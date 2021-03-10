@@ -1,21 +1,32 @@
+# prepare_delay.R
+
+# TODO - add header information
+
 library(rsyncrosim)
 library(tidyr)
 library(data.table)
 library(dplyr)
 library(rightTruncation)
 
-myScenario <- scenario()
-env <- ssimEnvironment()
+# Set the epi package project-scoped strings for jurisdiction and variables
+jurisdictionBC <- "Canada - British Columbia"
 
-inputSheet <- datasheet(myScenario, "modelCovidseir_DelayFileInfo")
+env <- ssimEnvironment()
+myScenario <- scenario()
+
+# Add the required variables and jurisdictions to the SyncroSim project
+saveDatasheet(myScenario, data.frame(Name = jurisdictionBC), "epi_Jurisdiction")   # Will ignore if exists already
+
+# Get the inputs
+inputSheet <- datasheet(myScenario, "modelCovidseir_DelayInputs")
 
 # will write the delay data to this sheet
-outputSheet <- datasheet(myScenario, "modelCovidseir_DelayFileInfo", empty = T)
+outputSheet <- datasheet(myScenario, "modelCovidseir_DelayOutputs", empty = T)
 outputSheet[1,] <- NA
-outputSheet <- transform(outputSheet, DelayDownloadDateTime = as.character(DelayDownloadDateTime), WeibullDownloadDateTime = as.character(WeibullDownloadDateTime))
+outputSheet <- transform(outputSheet, DelayDownloadDateTime = as.character(DelayDownloadDateTime))
 
 # read the rda file from the Andersen Github
-rdaFileName <- paste(env$TempDirectory, "delayData.rda", sep='/')
+rdaFileName <- paste(env$TempDirectory, "delay_data.rda", sep='/')
 download.file(
     gsub(' ', '', inputSheet$delayURL, fixed = TRUE),
     destfile=rdaFileName,
@@ -26,22 +37,22 @@ delayData <- get(load(rdaFileName)) %>%
     data.table() %>%
     mutate_at(vars(time_to_report), as.integer)
 # write  the delay data to file and log the name/time
-delayDataFilename <- paste(env$TransferDirectory, "CaseReportingDelayData.csv", sep='/')
+delayDataFilename <- paste(env$TransferDirectory, "individual_reporting_delay_data.csv", sep='/')
 write.csv(delayData, delayDataFilename)
 
 outputSheet$DelayDataFile <-delayDataFilename
-outputSheet$delayURL <- inputSheet$delayURL
+# outputSheet$delayURL <- inputSheet$delayURL
 outputSheet$DelayDownloadDateTime <- as.character(Sys.time())
 
 # save to output sheet
-delayDatasheet <- datasheet(myScenario, "modelCovidseir_RawDelayData", empty=T)
+delayDatasheet <- datasheet(myScenario, "modelCovidseir_DelayData", empty=T)
 delayDatasheet[nrow(delayData), ] <- NA
 delayDatasheet$dateReported <- delayData$reported_date
 delayDatasheet$dateSymptom <- delayData$symptom_onset_date
 delayDatasheet$reportingGap <- delayData$time_to_report
-saveDatasheet(myScenario, delayDatasheet, "modelCovidseir_RawDelayData")
+saveDatasheet(myScenario, delayDatasheet, "modelCovidseir_DelayData")
 
-# time for a Weibull distribution
+# Generate Weibull distribution
 
 # set the first day so that we can calculate the time that passed in days
 hDay0 <- min(delayData$symptom_onset_date)
@@ -69,17 +80,18 @@ mleShape <- mleRes$estimate[1]
 mleScale <- mleRes$estimate[2]
 
 # data sheets and file information
-wParams <- datasheet(myScenario, "modelCovidseir_WeibullParameters", empty=T)
+wParams <- datasheet(myScenario, "modelCovidseir_DelayWeibull", empty=T)
 wParams[1,] <- NA
 wParams$mleShape <- mleShape
 wParams$mleScale <- mleScale
-saveDatasheet(myScenario, wParams, "modelCovidseir_WeibullParameters")
+saveDatasheet(myScenario, wParams, "modelCovidseir_DelayWeibull")
 
-weibullFilename <- paste(env$TempDirectory, "modelCovidseir_WeibullParameters.csv", sep="/")
+weibullFilename <- paste(env$TempDirectory, "reporting_delay_weibull_parameters.csv", sep="/")
 
 write.csv(wParams, weibullFilename, row.names=FALSE)
 
 outputSheet$WeibullDataFile <- weibullFilename
-outputSheet$WeibullDownloadDateTime <- as.character(Sys.time())
+# outputSheet$WeibullDownloadDateTime <- as.character(Sys.time())
 
-saveDatasheet(myScenario, outputSheet, "modelCovidseir_DelayFileInfo")
+saveDatasheet(myScenario, outputSheet, "modelCovidseir_DelayOutputs")
+

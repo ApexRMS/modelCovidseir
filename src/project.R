@@ -20,6 +20,8 @@ maxIteration <- runControl$MaximumIteration
 if(length(maxIteration)==0){ maxIteration <- 100 }
 if(is.na(maxIteration)){ maxIteration <- 100 }
 
+maxIteration <- 1
+
 # BC case data
 caseData <- datasheet(myScenario, "epi_DataSummary") %>% transform(Timestep = as.Date(Timestep))
 
@@ -28,10 +30,13 @@ maxTimeStep <- runControl$MaximumTimestep
 if(length(maxTimeStep)==0){ maxTimeStep <- max(caseData$Timestep) + 45 }
 if(is.na(maxTimeStep)){ maxTimeStep <- max(caseData$Timestep) + 45 }
 
+maxTimeStep <- max(caseData$Timestep) + 45
+
 # calculate the duration and extension of the simulation
 totalDuration <- (as.Date(maxTimeStep) - min(caseData$Timestep))[[1]]
 daysToProject <-(as.Date(maxTimeStep) - as.Date(max(caseData$Timestep)))[[1]]
- # if no projection is requested, fail
+
+# if no projection is requested, fail
 if((daysToProject<=0) | (is.na(daysToProject))) stop()
 
 # importing the fit object from the fitting step

@@ -1,3 +1,7 @@
+# fit.R
+
+# TODO - add header information
+
 library(tidyr)
 library(data.table)
 library(dplyr)
@@ -46,7 +50,7 @@ genParams <- datasheet(myScenario, "modelCovidseir_General")
 # project-level run control
 runControl <- datasheet(myScenario, "epi_RunControl")
 # shape and scale parameters for the case reporting delay Weibull distribution
-wParams <- datasheet(myScenario, "modelCovidseir_WeibullParameters")
+wParams <- datasheet(myScenario, "modelCovidseir_DelayWeibull")
 
 numIter <- runControl$MaximumIteration
 if(length(numIter) == 0){ numIter <- 2000 }
@@ -67,8 +71,8 @@ theFit <- covidseir::fit_seir(
     iter = numIter,
     N_pop = genParams$NPop,
     i0_prior = c(log(genParams$I0PriorMean), genParams$I0PriorSD),
-    delay_shape = wParams$mleShape,
-    delay_scale = wParams$mleScale,
+    delay_shape = wParams$MleShape,
+    delay_scale = wParams$MleScale,
     time_increment = 0.25,
     save_state_predictions = TRUE,
     fit_type = if(genParams$FitType==1) "NUTS" else if(genParams$FitType==2) "VB" else "optimizing"

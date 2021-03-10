@@ -1,53 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package name="modelCovidseir" displayName="Add-On to the Epidemic Package for the covidSEIR model" isAddOn="True" extendsPackage="epi" version="1.0.0">
+<package name="modelCovidseir" displayName="Add-On to the epi package for the covidseir model" isAddOn="True" extendsPackage="epi" version="1.0.0">
 	<transformers>
 		<transformer
-			name="modelCovidseir_Download"
+			name="PrepareDelay"
 			isPrimary="True"
-			displayName="modelCovidseir_Download"
+			displayName="covidseir model: Download and fit delay data"
 			programName="Rscript"
-			programArguments="gather.R"
+			programArguments="prepare_delay.R"
 			extendsTransformer="epi_Primary"
 			runContext="LocalOnly"
 			isRunnable="True">
 			<datafeeds>
-				<datafeed name="DelayFileInfo" displayName="rightTruncation Delay Data" dataScope="Scenario">
-          <datasheets>
-            <datasheet name="DelayFileInfo" displayName="rightTruncation Delay Data" isSingleRow="True">
-              <columns>
-                <column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
-                <column name="ScenarioID" dataType="Integer"/>
-                <column name="delayURL" dataType="String" displayName="Case Reporting Delay Data URL"/>
-								<column name="DelayDataFile" displayName="Case Reporting Delay Data File" dataType="String" isExternalFile="True"/>
-								<column name="DelayDownloadDateTime" displayName="Download Date/Time" dataType="Date"/>
-								<column name="WeibullDataFile" displayName="Reporting Delay Distribution Parameters" dataType="String" isExternalFile="True"/>
-								<column name="WeibullDownloadDateTime" displayName="Download Date/Time" dataType="Date"/>
-              </columns>
+				<datafeed name="DelayInputs" displayName="Reporting Delay - Inputs" dataScope="Scenario">
+					<datasheets>
+						<datasheet name="DelayInputs" displayName="Reporting Delay - Inputs" isSingleRow="True">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="delayURL" dataType="String" displayName="Reporting delay data URL"/>
+							</columns>
 							<defaultRecords>
 								<record columns="delayURL" values="https://github.com/andrew-edwards/rightTruncation/raw/master/data/delay_data_2021_01_05.rda"/>
 							</defaultRecords>
-            </datasheet>
-          </datasheets>
-        </datafeed>
-				<datafeed name="RawDelayData" displayName="Raw Output" dataScope="Scenario" isOutput="True">
-          <datasheets>
-            <datasheet name="RawDelayData" displayName="Raw Output">
-              <columns>
-                <column name="ScenarioID" dataType="Integer"/>
-                <column name="dateReported" dataType="String" displayName="Date of Case Report"/>
-                <column name="dateSymptom" dataType="String" displayName="Date of Symptom Onset"/>
-                <column name="reportingGap" dataType="Integer" displayName="Delay between Symptoms and Reporting (days)"/>
-              </columns>
-            </datasheet>
-          </datasheets>
-        </datafeed>
-				<datafeed name="WeibullParameters" displayName="Weibull Shape and Scale Parameters" dataScope="Scenario" isOutput="True">
+						</datasheet>
+					</datasheets>
+				</datafeed>
+				<datafeed name="DelayOutputs" displayName="Reporting Delay - Raw Outputs" dataScope="Scenario">
 					<datasheets>
-						<datasheet name="WeibullParameters" displayName="Weibull Shape and Scale Parameters" isSingleRow="True">
+						<datasheet name="DelayOutputs" displayName="Reporting Delay - Raw Outputs" isSingleRow="True">
+							<columns>
+								<column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
+								<column name="DelayDataFile" displayName="Reporting delay data filename" dataType="String" isExternalFile="True"/>
+								<column name="DelayDownloadDateTime" displayName="Reporting delay download date/time" dataType="Date"/>
+								<column name="WeibullDataFile" displayName="Weibull distribution parameters" dataType="String" isExternalFile="True"/>
+							</columns>
+						</datasheet>
+					</datasheets>
+				</datafeed>
+				<datafeed name="DelayData" displayName="Reporting Delay - Individual Data" dataScope="Scenario" isOutput="True">
+					<datasheets>
+						<datasheet name="DelayData" displayName="Reporting Delay - Individual Data">
+						  <columns>
+							<column name="ScenarioID" dataType="Integer"/>
+							<column name="DateReported" dataType="String" displayName="Date of Case Report"/>
+							<column name="DateSymptom" dataType="String" displayName="Date of Symptom Onset"/>
+							<column name="ReportingGap" dataType="Integer" displayName="Reporting Delay (days)"/>
+						  </columns>
+						</datasheet>
+					</datasheets>
+				</datafeed>
+				<datafeed name="DelayWeibull" displayName="Reporting Delay - Weibull Distribution" dataScope="Scenario" isOutput="True">
+					<datasheets>
+						<datasheet name="DelayWeibull" displayName="Reporting Delay - Weibull Distribution" isSingleRow="True">
 							<columns>
 								<column name="ScenarioID" dataType="Integer"/>
-								<column name="mleShape" dataType="Double" displayName="Shape Parameter"/>
-								<column name="mleScale" dataType="Double" displayName="Scale Parameter"/>
+								<column name="MleShape" dataType="Double" displayName="Shape parameter"/>
+								<column name="MleScale" dataType="Double" displayName="Scale parameter"/>
 							</columns>
 						</datasheet>
 					</datasheets>
@@ -59,8 +68,8 @@
 			</include>
 		</transformer>
 		<transformer
-			name="modelCovidseir_Fit"
-			displayName="modelCovidseir_Fit"
+			name="Fit"
+			displayName="covidseir model: Fit"
 			programName="Rscript"
 			programArguments="fit.R"
 			extendsTransformer="epi_Primary"
@@ -179,32 +188,32 @@
 			</datafeeds>
 		</transformer>
 		<transformer
-		  name="modelCovidseir_Project"
-		  displayName="modelCovidseir_Project"
-		  programName="Rscript"
-		  programArguments="project.R"
-		  extendsTransformer="epi_Primary"
-		  isRunnable ="True">
-		  <datafeeds>
-		    <datafeed name="ProjParams" displayName="Parameters" dataScope="Scenario" isInput="True">
-		      <datasheets>
-		        <datasheet name="ProjParams" displayName="Parameters" isSingleRow="True">
-		          <columns>
-		            <column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
-		            <column name="StartChange" dataType="Integer" displayName="Day of Social Distancing Change [f_fixed_start]"/>
-		            <column name="Resampling" dataType="Integer" displayName="Number Of Samples For Smoothing [resample_y_rep]"/>
+			name="Project"
+			displayName="covidseir model: Project"
+			programName="Rscript"
+			programArguments="project.R"
+			extendsTransformer="epi_Primary"
+			isRunnable ="True">
+			<datafeeds>
+				<datafeed name="ProjParams" displayName="Parameters" dataScope="Scenario" isInput="True">
+					<datasheets>
+						<datasheet name="ProjParams" displayName="Parameters" isSingleRow="True">
+							<columns>
+								<column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="StartChange" dataType="Integer" displayName="Day of Social Distancing Change [f_fixed_start]"/>
+								<column name="Resampling" dataType="Integer" displayName="Number Of Samples For Smoothing [resample_y_rep]"/>
 								<column name="Multiplic" dataType="Double" displayName="Per-Day Multiplying Factor For Projection Contact Rates"/>
-		            <column name="FSegment" dataType="Integer" displayName="Social Distancing Segment Number [f_multi_seg]"/>
+								<column name="FSegment" dataType="Integer" displayName="Social Distancing Segment Number [f_multi_seg]"/>
 								<column name="Imports" dataType="Integer" displayName="Number of Imported Cases [imported_cases]"/>
 								<column name="ImportWindow" dataType="Integer" displayName="Number of Days Over Which Case Imports Are Distributed [imported_window]"/>
 								<column name="Parallel" dataType="Integer" displayName="Parallel Processing [parallel]" validationType="List" formula1="1:Yes|0:No"/>
-		          </columns>
-		          <defaultRecords>
-		            <record columns="StartChange|FSegment|Resampling|Parallel|Multiplic|Imports|ImportWindow" values="5|1|30|1|1.1|0|1"/>
-		          </defaultRecords>
-		        </datasheet>
-		      </datasheets>
-		    </datafeed>
+							</columns>
+							<defaultRecords>
+								<record columns="StartChange|FSegment|Resampling|Parallel|Multiplic|Imports|ImportWindow" values="5|1|30|1|1.1|0|1"/>
+							</defaultRecords>
+						</datasheet>
+					</datasheets>
+				</datafeed>
 				<!-- <datafeed name="SimData" displayName="Projection Data" dataScope="Scenario" isOutput="True">
 					<datasheets>
 						<datasheet name="SimData" displayName="Projection Data">
@@ -233,19 +242,20 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
-		  </datafeeds>
+			</datafeeds>
 		</transformer>
 	</transformers>
 	<layouts>
 		<layout name="coreforms_ScenarioDatafeeds">
-			<item name="DelayFileInfo" displayName="rightTruncation Delay Data" appendTo="epi_Sources"/>
-			<item name="FitFileInfo" displayName="Data Fit Object File" appendTo="epi_Sources"/>
-			<item name="ProjFileInfo" displayName="Projection Data FIle" appendTo="epi_Sources"/>
-			<group name='CovidSeir' displayName="CovidSeir" appendTo="epi_Models">
-				<group name="DelayData" displayName="Case Reporting Delays" appendTo="CovidSeir">
-					<item name="RawDelayData"/>
-					<item name="WeibullParameters"/>
+			<group name="DelayData" displayName="BC Reporting Delay Data" appendTo="epi_Sources">
+				<item name="DelayInputs" displayName="Inputs"/>
+				<group name="Outputs" displayName="Outputs">
+					<item name="DelayOutputs" displayName="Raw Outputs"/>
+					<item name="DelayData" displayName="Individual Delay Data"/>
+					<item name="DelayWeibull" displayName="Weibull Distribution"/>
 				</group>
+			</group>
+			<group name="Covidseir" displayName="covidseir" appendTo="epi_Models">
 				<group name="FitModel" displayName="Fit Model" appendTo="CovidSeir">
 					<group name="FitInputs" displayName="Inputs" appendTo="FitModel">
 						<item name="General"/>
@@ -256,12 +266,6 @@
 						<item name="PostsGeneral"/>
 						<item name="PostsContactRates"/>
 					</group>
-				</group>
-				<group name="Projection" displayName="Projection" appendTo="CovidSeir">
-					<group name="ProjectionInputs" displayName="Inputs" appendTo="Projection">
-						<item name="ProjParams"/>
-					</group>
-					<!-- <item name="SimData"/> -->
 				</group>
 			</group>
 		</layout>
