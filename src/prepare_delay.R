@@ -94,4 +94,3 @@ outputSheet$WeibullDataFile <- weibullFilename
 # outputSheet$WeibullDownloadDateTime <- as.character(Sys.time())
 
 saveDatasheet(myScenario, outputSheet, "modelCovidseir_DelayOutputs")
-

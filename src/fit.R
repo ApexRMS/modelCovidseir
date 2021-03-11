@@ -15,6 +15,7 @@ env <- ssimEnvironment()
 # get the BC case data
 caseData <- data.table(datasheet(myScenario, "epi_DataSummary"))
 caseData$Timestep <- as.Date(caseData$Timestep)
+caseData <- caseData[Variable == 'Cases - Daily']
 
 # fetch the contact rate segments from the input table
 fSegments <- datasheet(myScenario, "modelCovidseir_ContactRateFractions") %>% arrange(BreakDay) %>% data.table
@@ -61,8 +62,7 @@ theFit <- covidseir::fit_seir(
     daily_cases = caseData$Value,
     samp_frac_fixed = proportionTested,
     f_seg = fSeg,
-    # this argument is disabled because of a frequent obscure error
-    # f_prior = cbind(fSegments$PriorMean, fSegments$PriorSD), # MUST BE A MATRIX, NOT A TABLE
+    f_prior = cbind(fSegments$PriorMean, fSegments$PriorSD), # MUST BE A MATRIX, NOT A TABLE
     R0_prior =  c(log(genParams$R0PriorMean), genParams$R0PriorSD),
     e_prior = c(genParams$EPriorMean, genParams$EPriorSD),
     start_decline_prior = c(log(genParams$StartDeclinePriorMean), genParams$StartDeclinePriorSD),

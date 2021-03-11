@@ -87,9 +87,8 @@
 							</columns>
 							<defaultRecords>
 								<record columns="BreakDay|PriorMean|PriorSD" values="0|0.4|0.2"/>
-								<record columns="BreakDay|PriorMean|PriorSD" values="322|0.7|0.2"/>
-								<record columns="BreakDay|PriorMean|PriorSD" values="247|0.95|0.2"/>
-								<record columns="BreakDay|PriorMean|PriorSD" values="292|0.45|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="204|0.6|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="322|0.4|0.2"/>
 							</defaultRecords>
 						</datasheet>
 					</datasheets>
@@ -112,7 +111,6 @@
 								<record columns="Day|Proportion" values="152|0.628"/>
 								<record columns="Day|Proportion" values="158|0.775"/>
 								<record columns="Day|Proportion" values="181|0.822"/>
-								<record columns="Day|Proportion" values="208|0.134"/>
 								<record columns="Day|Proportion" values="201|0.992"/>
 							</defaultRecords>
 						</datasheet>
@@ -139,7 +137,8 @@
 								<column name="RDS" dataType="String" displayName="Fit Results RDS Filename"/>
 							</columns>
 							<defaultRecords>
-								<record columns="NPop|I0PriorMean|I0PriorSD|R0PriorMean|R0PriorSD|EPriorMean|EPriorSD|StartDeclinePriorMean|StartDeclinePriorSD|EndDeclinePriorMean|EndDeclinePriorSD|FitType|RDS" values="5071000|8|1|2.6|0.2|0.8|0.05|15|0.05|22|0.05|3|modelCovidseir_fit"/>
+								<!-- <record columns="NPop|I0PriorMean|I0PriorSD|R0PriorMean|R0PriorSD|EPriorMean|EPriorSD|StartDeclinePriorMean|StartDeclinePriorSD|EndDeclinePriorMean|EndDeclinePriorSD|FitType|RDS" values="5071000|8|1|2.6|0.2|0.8|0.05|15|0.05|22|0.05|3|modelCovidseir_fit"/> -->
+								<record columns="NPop|I0PriorMean|I0PriorSD|R0PriorMean|R0PriorSD|EPriorMean|EPriorSD|StartDeclinePriorMean|StartDeclinePriorSD|EndDeclinePriorMean|EndDeclinePriorSD|FitType|RDS" values="5071000|8|1|2|0.2|0.8|0.05|15|0.05|22|0.05|3|modelCovidseir_fit"/>
 							</defaultRecords>
 						</datasheet>
 					</datasheets>
@@ -214,23 +213,6 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
-				<!-- <datafeed name="SimData" displayName="Projection Data" dataScope="Scenario" isOutput="True">
-					<datasheets>
-						<datasheet name="SimData" displayName="Projection Data">
-							<columns>
-								<column name="ScenarioID" displayName="Scenario" dataType="Integer"/>
-								<column name="Iteration" dataType="Integer" displayName="Iteration"/>
-								<column name="Timestep" dataType="Date" displayName="Timestep"/>
-								<column name="Variable" dataType="String" displayName="Variable"/>
-								<column name="Jurisdiction" dataType="String" displayName="Jurisdiction" />
-								<column name="AgeMin" displayName="Age Min" dataType="Integer"/>
-								<column name="AgeMax" displayName="Age Max" dataType="Integer"/>
-								<column name="Sex" dataType="Integer" displayName="Sex"/>
-								<column name="Value" dataType="Double" displayName="Value"/>
-							</columns>
-						</datasheet>
-					</datasheets>
-				</datafeed> -->
 				<datafeed name="ProjFileInfo" displayName="Projection Data File" dataScope="Scenario" isOutput="True">
 					<datasheets>
 						<datasheet name="ProjFileInfo" displayName="Projection Data File" isSingleRow="True">

@@ -20,7 +20,7 @@ maxIteration <- runControl$MaximumIteration
 if(length(maxIteration)==0){ maxIteration <- 100 }
 if(is.na(maxIteration)){ maxIteration <- 100 }
 
-maxIteration <- 1
+maxIteration <- 10
 
 # BC case data
 caseData <- datasheet(myScenario, "epi_DataSummary") %>% transform(Timestep = as.Date(Timestep))
@@ -88,7 +88,7 @@ for(index in 1:maxIteration)
     for(projRow in 1:nrow(theProj))
     {
         simData <- addRow(simData, value=c(
-            Variable = "Cases",
+            Variable = "Cases - Daily",
             Jurisdiction = "Canada - British Columbia",
             Timestep = tidyProj[projRow,]$date,
             Value = tidyProj[projRow,]$y_rep_mean,
