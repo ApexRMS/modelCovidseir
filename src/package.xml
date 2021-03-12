@@ -15,7 +15,7 @@
 					<datasheets>
 						<datasheet name="DelayInputs" displayName="Reporting Delay - Inputs" isSingleRow="True">
 							<columns>
-								<column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
+								<column name="DelayInputsID" dataType="Integer" isPrimary="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
 								<column name="delayURL" dataType="String" displayName="Reporting delay data URL"/>
 							</columns>
@@ -25,11 +25,10 @@
 						</datasheet>
 					</datasheets>
 				</datafeed>
-				<datafeed name="DelayOutputs" displayName="Reporting Delay - Raw Outputs" dataScope="Scenario">
+				<datafeed name="DelayOutputs" displayName="Reporting Delay - Raw Outputs" dataScope="Scenario" isOutput="True">
 					<datasheets>
 						<datasheet name="DelayOutputs" displayName="Reporting Delay - Raw Outputs" isSingleRow="True">
 							<columns>
-								<column name="InputDatasheetID" dataType="Integer" isPrimary="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
 								<column name="DelayDataFile" displayName="Reporting delay data filename" dataType="String" isExternalFile="True"/>
 								<column name="DelayDownloadDateTime" displayName="Reporting delay download date/time" dataType="Date"/>
@@ -79,7 +78,7 @@
 					<datasheets>
 						<datasheet name="ContactRateFractions" displayname="Contact Rate Fractions">
 							<columns>
-								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="ContactRateFractionsID" dataType="Integer" isPrimary="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
 								<column name="BreakDay" dataType="Integer" displayName="Breakpoint Day"/>
 								<column name="PriorMean" dataType="Double" displayName="Prior Mean"/>
@@ -97,7 +96,7 @@
 					<datasheets>
 						<datasheet name="SamplingFractions" displayName="Sampling Fractions">
 							<columns>
-								<column name="InputDatasheetID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="SamplingFractionsID" dataType="Integer" isPrimary="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
 								<column name="Day" dataType="Integer" displayName="Day"/>
 								<column name="Proportion" dataType="Double" displayName="Proportion [samp_frac_fixed]"/>
@@ -120,7 +119,8 @@
 					<datasheets>
 						<datasheet name="General" displayName="General" isSingleRow="True">
 							<columns>
-								<column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="GeneralID" dataType="Integer" isPrimary="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
 								<column name="NPop" dataType="Integer" displayName="Population Size [N_pop]"/>
 								<column name="I0PriorMean" dataType="Double" displayName="Initial Infected - Prior Mean [i0_prior mean]"/>
 								<column name="I0PriorSD" dataType="Double" displayName="Initial Infected - Prior SD [i0_prior SD]"/>
@@ -198,7 +198,8 @@
 					<datasheets>
 						<datasheet name="ProjParams" displayName="Parameters" isSingleRow="True">
 							<columns>
-								<column name="ScenarioID" dataType="Integer" isPrimary="True" isInput="True"/>
+								<column name="ProjParamsID" dataType="Integer" isPrimary="True"/>
+								<column name="ScenarioID" dataType="Integer"/>
 								<column name="StartChange" dataType="Integer" displayName="Day of Social Distancing Change [f_fixed_start]"/>
 								<column name="Resampling" dataType="Integer" displayName="Number Of Samples For Smoothing [resample_y_rep]"/>
 								<column name="Multiplic" dataType="Double" displayName="Per-Day Multiplying Factor For Projection Contact Rates"/>

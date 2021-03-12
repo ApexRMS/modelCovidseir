@@ -20,17 +20,23 @@ maxIteration <- runControl$MaximumIteration
 if(length(maxIteration)==0){ maxIteration <- 100 }
 if(is.na(maxIteration)){ maxIteration <- 100 }
 
-maxIteration <- 10
+# maxIteration <- 2
 
 # BC case data
 caseData <- datasheet(myScenario, "epi_DataSummary") %>% transform(Timestep = as.Date(Timestep))
+caseData <- filter(caseData, Variable == "Cases - Daily")
 
 # if the end day of the projection is not given by the user, default to 45 days
 maxTimeStep <- runControl$MaximumTimestep
-if(length(maxTimeStep)==0){ maxTimeStep <- max(caseData$Timestep) + 45 }
-if(is.na(maxTimeStep)){ maxTimeStep <- max(caseData$Timestep) + 45 }
+minTimeStep <- runControl$MinimumTimestep
 
-maxTimeStep <- max(caseData$Timestep) + 45
+# TODO - sort out minimum timestep - should check for valid value from user
+minTimeStep <- max(caseData$Timestep)
+
+if(length(maxTimeStep)==0){ maxTimeStep <- max(caseData$Timestep) + 28 }
+if(is.na(maxTimeStep)){ maxTimeStep <- max(caseData$Timestep) + 28 }
+
+# maxTimeStep <- max(caseData$Timestep) + 7
 
 # calculate the duration and extension of the simulation
 totalDuration <- (as.Date(maxTimeStep) - min(caseData$Timestep))[[1]]
@@ -65,11 +71,11 @@ simData$Sex <- NULL
 # I tried to get a progress bar, but it's not functioning
 envBeginSimulation(maxIteration)
 
-for(index in 1:maxIteration)
-{
-    envReportProgress(1, index)
+for(index in 1:maxIteration) {
+    # for testing: index = 1  
+    envReportProgress(index, 1)
 
-		# do the projection
+    	# do the projection
     theProj <- covidseir::project_seir(
         theFit,
         iter = 1:1,
@@ -81,10 +87,10 @@ for(index in 1:maxIteration)
         imported_window = projParams$ImportWindow,
         parallel = (projParams$Parallel=="Yes")
     )
-		# resample for smoother results
+    	# resample for smoother results
     tidyProj <- covidseir::tidy_seir(theProj, resample_y_rep = projParams$Resampling)
     tidyProj <- dplyr::left_join(tidyProj, lut, by = "day")
-		# copy the results of each iteration to a datasheet
+    	# copy the results of each iteration to a datasheet
     for(projRow in 1:nrow(theProj))
     {
         simData <- addRow(simData, value=c(
@@ -103,4 +109,10 @@ envEndSimulation()
 # cast the Date column to IDate (that seems to work for the dataBcCdc package) and save the sheet
 simData <- transform(simData, Timestep=as.IDate(Timestep))
 
+# Only save the projected values (include last actual data value also)
+simData <- filter(simData, Timestep >= minTimeStep)
+
+runControl$MaximumIteration = maxIteration
+
 saveDatasheet(myScenario, simData, name = "epi_DataSummary", append = F)
+saveDatasheet(myScenario, runControl, name = "epi_RunControl", append = F)
