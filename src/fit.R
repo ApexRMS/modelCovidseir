@@ -13,9 +13,9 @@ myScenario <- scenario()
 env <- ssimEnvironment()
 
 # get the BC case data
-caseData <- data.table(datasheet(myScenario, "epi_DataSummary"))
-caseData$Timestep <- as.Date(caseData$Timestep)
-caseData <- caseData[Variable == 'Cases - Daily']
+dataSummary <- data.table(datasheet(myScenario, "epi_DataSummary"))
+caseData <- dataSummary[Variable == 'Cases - Daily', .SD, .SDcols=c("Timestep", "Value")][order(Timestep)]
+caseData[, Timestep:=as.Date(Timestep)]
 
 # fetch the contact rate segments from the input table
 fSegments <- datasheet(myScenario, "modelCovidseir_ContactRateFractions") %>% arrange(BreakDay) %>% data.table

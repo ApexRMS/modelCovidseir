@@ -61,6 +61,12 @@
 					</datasheets>
 				</datafeed>
 			</datafeeds>
+			<pipeline>
+				<datafeed name="DelayInputs" type="Input"/>
+				<datafeed name="DelayOutputs" type="Output"/>
+				<datafeed name="DelayData" type="Output"/>
+				<datafeed name="DelayWeibull" type="Output"/>
+			</pipeline>
 			<include>
 				<transformer name="modelCovidseir_Fit"/>
 				<transformer name="modelCovidseir_Project"/>
@@ -137,7 +143,6 @@
 								<column name="RDS" dataType="String" displayName="Fit Results RDS Filename"/>
 							</columns>
 							<defaultRecords>
-								<!-- <record columns="NPop|I0PriorMean|I0PriorSD|R0PriorMean|R0PriorSD|EPriorMean|EPriorSD|StartDeclinePriorMean|StartDeclinePriorSD|EndDeclinePriorMean|EndDeclinePriorSD|FitType|RDS" values="5071000|8|1|2.6|0.2|0.8|0.05|15|0.05|22|0.05|3|modelCovidseir_fit"/> -->
 								<record columns="NPop|I0PriorMean|I0PriorSD|R0PriorMean|R0PriorSD|EPriorMean|EPriorSD|StartDeclinePriorMean|StartDeclinePriorSD|EndDeclinePriorMean|EndDeclinePriorSD|FitType|RDS" values="5071000|8|1|2|0.2|0.8|0.05|15|0.05|22|0.05|3|modelCovidseir_fit"/>
 							</defaultRecords>
 						</datasheet>
@@ -185,6 +190,17 @@
 					</datasheets>
 				</datafeed>
 			</datafeeds>
+			<pipeline>
+				<datafeed name="DelayWeibull" type="Input"/>
+				<datafeed name="ContactRateFractions" type="Input"/>
+				<datafeed name="SamplingFractions" type="Input"/>
+				<datafeed name="General" type="Input"/>
+				<datafeed name="PostsGeneral" type="Output"/>
+				<datafeed name="PostsContactRates" type="Output"/>
+				<datafeed name="FitFileInfo" type="Output"/>
+				<datafeed name="epi_RunControl" type="Input"/>
+				<datafeed name="epi_DataSummary" type="Input"/>
+			</pipeline>
 		</transformer>
 		<transformer
 			name="Project"
@@ -226,6 +242,15 @@
 					</datasheets>
 				</datafeed>
 			</datafeeds>
+			<pipeline>
+				<datafeed name="PostsGeneral" type="Input"/>
+				<datafeed name="PostsContactRates" type="Input"/>
+				<datafeed name="ProjParams" type="Input"/>
+				<datafeed name="ProjFileInfo" type="Output"/>
+				<datafeed name="epi_DataSummary" type="Both"/>
+				<datafeed name="epi_RunControl" type="Input"/>
+				<datafeed name="General" type="Input"/>
+			</pipeline>
 		</transformer>
 	</transformers>
 	<layouts>
@@ -248,6 +273,7 @@
 					<group name="FitOutputs" displayName="Outputs" appendTo="FitModel">
 						<item name="PostsGeneral"/>
 						<item name="PostsContactRates"/>
+						<item name="epi_DataSummary" transformerFilter="Project"/>
 					</group>
 				</group>
 			</group>

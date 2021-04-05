@@ -8,14 +8,8 @@ library(data.table)
 library(dplyr)
 library(rightTruncation)
 
-# Set the epi package project-scoped strings for jurisdiction and variables
-jurisdictionBC <- "Canada - British Columbia"
-
 env <- ssimEnvironment()
 myScenario <- scenario()
-
-# Add the required variables and jurisdictions to the SyncroSim project
-saveDatasheet(myScenario, data.frame(Name = jurisdictionBC), "epi_Jurisdiction")   # Will ignore if exists already
 
 # Get the inputs
 inputSheet <- datasheet(myScenario, "modelCovidseir_DelayInputs")

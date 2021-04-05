@@ -17,14 +17,13 @@ runControl <- datasheet(myScenario, "epi_RunControl")
 
 # if max iteration not given in the table by the user, we set it here
 maxIteration <- runControl$MaximumIteration
-if(length(maxIteration)==0){ maxIteration <- 100 }
-if(is.na(maxIteration)){ maxIteration <- 100 }
-
-# maxIteration <- 2
+if(length(maxIteration)==0){ maxIteration <- 10 }
+if(is.na(maxIteration)){ maxIteration <- 10 }
 
 # BC case data
-caseData <- datasheet(myScenario, "epi_DataSummary") %>% transform(Timestep = as.Date(Timestep))
-caseData <- filter(caseData, Variable == "Cases - Daily")
+caseData <- data.table(datasheet(myScenario, "epi_DataSummary"))
+caseData <- caseData[Variable == "Cases - Daily", .SD, .SDcols=c("Timestep", "Value")][order(Timestep)]
+caseData[, Timestep:=as.Date(Timestep)]
 
 # if the end day of the projection is not given by the user, default to 45 days
 maxTimeStep <- runControl$MaximumTimestep
@@ -35,8 +34,6 @@ minTimeStep <- max(caseData$Timestep)
 
 if(length(maxTimeStep)==0){ maxTimeStep <- max(caseData$Timestep) + 28 }
 if(is.na(maxTimeStep)){ maxTimeStep <- max(caseData$Timestep) + 28 }
-
-# maxTimeStep <- max(caseData$Timestep) + 7
 
 # calculate the duration and extension of the simulation
 totalDuration <- (as.Date(maxTimeStep) - min(caseData$Timestep))[[1]]
@@ -60,19 +57,14 @@ lut <- dplyr::tibble(
 )
 
 # read the standard output table
-simData <- datasheet(myScenario, "epi_DataSummary", empty = T, optional = T, lookupsAsFactors = F)
-# simData$Iteration <- numeric(0)
-# simData$Timestep <- numeric(0)
-simData <- simData %>% transform(Timestep=as.Date(Timestep))
-simData$AgeMin <- NULL
-simData$AgeMax <- NULL
-simData$Sex <- NULL
+simData <- data.table(Iteration=numeric(), Timestep=character(), Variable=character(), Jurisdiction=character(), Value=numeric(), TransformerID=character())
+simData[, Timestep:=as.Date(Timestep)]
 
 # I tried to get a progress bar, but it's not functioning
 envBeginSimulation(maxIteration)
 
 for(index in 1:maxIteration) {
-    # for testing: index = 1  
+    # for testing: index = 1
     envReportProgress(index, 1)
 
     	# do the projection
@@ -93,12 +85,13 @@ for(index in 1:maxIteration) {
     	# copy the results of each iteration to a datasheet
     for(projRow in 1:nrow(theProj))
     {
-        simData <- addRow(simData, value=c(
+        simData <- rbind(simData, list(
             Variable = "Cases - Daily",
             Jurisdiction = "Canada - British Columbia",
             Timestep = tidyProj[projRow,]$date,
             Value = tidyProj[projRow,]$y_rep_mean,
-            Iteration = index
+            Iteration = index,
+            TransformerID = "covidseir model: Project"
         ))
     }
     envStepSimulation()
@@ -106,13 +99,9 @@ for(index in 1:maxIteration) {
 
 envEndSimulation()
 
-# cast the Date column to IDate (that seems to work for the dataBcCdc package) and save the sheet
-simData <- transform(simData, Timestep=as.IDate(Timestep))
+simDataCumul <- simData[, .(Value=cumsum(Value), Timestep=Timestep), by=c(setdiff(names(simData), c('Value', 'Timestep')))]
+simDataCumul$Variable <- "Cases - Cumulative"
 
-# Only save the projected values (include last actual data value also)
-simData <- filter(simData, Timestep >= minTimeStep)
+totalData <- rbind(simData, simDataCumul)
 
-runControl$MaximumIteration = maxIteration
-
-saveDatasheet(myScenario, simData, name = "epi_DataSummary", append = F)
-saveDatasheet(myScenario, runControl, name = "epi_RunControl", append = F)
+saveDatasheet(myScenario, totalData, name = "epi_DataSummary")
