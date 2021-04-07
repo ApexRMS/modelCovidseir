@@ -12,7 +12,11 @@ library(covidseir)
 myScenario <- scenario()
 env <- ssimEnvironment()
 
-# get the BC case data
+# get the case data
+
+# TODO: run on multiple user-selected jurisdictions
+# datasheet(myScenario, "modelCovidseir_FitRunJurisdictions")$Jurisdictions
+
 dataSummary <- data.table(datasheet(myScenario, "epi_DataSummary"))
 caseData <- dataSummary[Variable == 'Cases - Daily', .SD, .SDcols=c("Timestep", "Value")][order(Timestep)]
 caseData[, Timestep:=as.Date(Timestep)]
@@ -49,7 +53,7 @@ for(daysSince0 in 1:nrow(caseData))
 # general fitting function parameters
 genParams <- datasheet(myScenario, "modelCovidseir_General")
 # project-level run control
-runControl <- datasheet(myScenario, "epi_RunControl")
+runControl <- datasheet(myScenario, "modelCovidseir_FitRunSettings")
 # shape and scale parameters for the case reporting delay Weibull distribution
 wParams <- datasheet(myScenario, "modelCovidseir_DelayWeibull")
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package name="modelCovidseir" displayName="Add-On to the epi package for the covidseir model" isAddOn="True" extendsPackage="epi" version="1.0.0">
+<package name="modelCovidseir" displayName="Run covidseir model" isAddOn="True" extendsPackage="epi" version="1.0.0">
 	<transformers>
 		<transformer
 			name="PrepareDelay"
@@ -62,10 +62,10 @@
 				</datafeed>
 			</datafeeds>
 			<pipeline>
-				<datafeed name="DelayInputs" type="Input"/>
-				<datafeed name="DelayOutputs" type="Output"/>
-				<datafeed name="DelayData" type="Output"/>
-				<datafeed name="DelayWeibull" type="Output"/>
+				<datafeed name="DelayInputs"/>
+				<datafeed name="DelayOutputs"/>
+				<datafeed name="DelayData"/>
+				<datafeed name="DelayWeibull"/>
 			</pipeline>
 			<include>
 				<transformer name="modelCovidseir_Fit"/>
@@ -80,6 +80,32 @@
 			extendsTransformer="epi_Primary"
 			isRunnable ="True">
 			<datafeeds>
+				<datafeed name="FitRunSettings" displayName="covidseir Model - Fit Run Settings" dataScope="Scenario">
+				  <datasheets>
+					<datasheet name="FitRunSettings" displayName="covidseir Model - Fit Run Settings" isSingleRow="True">
+					  <columns>
+						<column name="FitRunSettingsID" dataType="Integer" isPrimary="True"/>
+						<column name="ScenarioID" displayName="Scenario" dataType="Integer"/>
+						<column name="MinimumIteration" dataType="Integer" isVisible="False" defaultValue="1" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1" format="d"/>                
+						<column name="MaximumIteration" dataType="Integer" displayName="Iterations" defaultValue="1" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1" format="d"/>
+					  </columns>
+					</datasheet>
+				  </datasheets>
+				</datafeed>
+				<datafeed name="FitRunJurisdictions" displayName="covidseir Model - Jurisdictions" dataScope="Scenario">
+				  <datasheets>
+					<datasheet name="FitRunJurisdictions" displayName="covidseir Model - Jurisdictions">
+					  <columns>
+						<column name="FitRunJurisdictionsID" dataType="Integer" isPrimary="True"/>
+						<column name="ScenarioID" dataType="Integer"/>
+						<column name="Jurisdictions" dataType="Integer" validationType="Datasheet" formula1="epi_Jurisdiction" allowDbNull="False"/>
+					  </columns>
+					  <validations>
+						<validation validationType="Unique" columns="Jurisdictions"/>
+					  </validations>
+					</datasheet>
+				  </datasheets>
+				</datafeed>
 				<datafeed name="ContactRateFractions" displayName="Contact Rate Fractions" dataScope="Scenario">
 					<datasheets>
 						<datasheet name="ContactRateFractions" displayname="Contact Rate Fractions">
@@ -191,15 +217,16 @@
 				</datafeed>
 			</datafeeds>
 			<pipeline>
-				<datafeed name="DelayWeibull" type="Input"/>
-				<datafeed name="ContactRateFractions" type="Input"/>
-				<datafeed name="SamplingFractions" type="Input"/>
-				<datafeed name="General" type="Input"/>
-				<datafeed name="PostsGeneral" type="Output"/>
-				<datafeed name="PostsContactRates" type="Output"/>
-				<datafeed name="FitFileInfo" type="Output"/>
-				<datafeed name="epi_RunControl" type="Input"/>
-				<datafeed name="epi_DataSummary" type="Input"/>
+				<datafeed name="FitRunSettings"/>
+				<datafeed name="FitRunJurisdictions"/>
+				<datafeed name="DelayWeibull"/>
+				<datafeed name="ContactRateFractions"/>
+				<datafeed name="SamplingFractions"/>
+				<datafeed name="General"/>
+				<datafeed name="PostsGeneral"/>
+				<datafeed name="PostsContactRates"/>
+				<datafeed name="FitFileInfo"/>
+				<datafeed name="epi_DataSummary"/>
 			</pipeline>
 		</transformer>
 		<transformer
@@ -243,37 +270,51 @@
 				</datafeed>
 			</datafeeds>
 			<pipeline>
-				<datafeed name="PostsGeneral" type="Input"/>
-				<datafeed name="PostsContactRates" type="Input"/>
-				<datafeed name="ProjParams" type="Input"/>
-				<datafeed name="ProjFileInfo" type="Output"/>
-				<datafeed name="epi_DataSummary" type="Both"/>
-				<datafeed name="epi_RunControl" type="Input"/>
-				<datafeed name="General" type="Input"/>
+				<datafeed name="PostsGeneral"/>
+				<datafeed name="PostsContactRates"/>
+				<datafeed name="ProjParams"/>
+				<datafeed name="ProjFileInfo"/>
+				<datafeed name="epi_DataSummary"/>
+				<datafeed name="General"/>
 			</pipeline>
 		</transformer>
 	</transformers>
 	<layouts>
 		<layout name="coreforms_ScenarioDatafeeds">
 			<group name="DelayData" displayName="BC Reporting Delay Data" appendTo="epi_Sources">
-				<item name="DelayInputs" displayName="Inputs"/>
+				<item name="DelayInputs" displayName="Inputs" showIf="isEither"/>
 				<group name="Outputs" displayName="Outputs">
-					<item name="DelayOutputs" displayName="Raw Outputs"/>
-					<item name="DelayData" displayName="Individual Delay Data"/>
-					<item name="DelayWeibull" displayName="Weibull Distribution"/>
+					<item name="DelayOutputs" displayName="Raw Outputs" showIf="isResult"/>
+					<item name="DelayData" displayName="Individual Delay Data" showIf="isResult"/>
+					<item name="DelayWeibull" displayName="Weibull Distribution" showIf="isResult"/>
 				</group>
 			</group>
-			<group name="Covidseir" displayName="covidseir" appendTo="epi_Models">
+			<group name="Covidseir" displayName="covidseir Model" appendTo="epi_Models">
 				<group name="FitModel" displayName="Fit Model" appendTo="CovidSeir">
 					<group name="FitInputs" displayName="Inputs" appendTo="FitModel">
-						<item name="General"/>
-						<item name="SamplingFractions"/>
-						<item name="ContactRateFractions"/>
+						<item name="FitRunSettings" displayName="Run Settings" showIf="isEither"/>
+						<item name="FitRunJurisdictions" displayName= "Jurisdictions" showIf="isEither"/>
+						<item name="General" showIf="isEither"/>
+						<item name="SamplingFractions" showIf="isEither"/>
+						<item name="ContactRateFractions" showIf="isEither"/>
+						<item
+							name="epi_DataSummary"
+							displayName="Cases"
+							showIf="isEither"
+							transformerFilter="!FitModel"            
+							viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
+							viewClassAssembly="SyncroSim.Core.Forms"/>/>          			
 					</group>
 					<group name="FitOutputs" displayName="Outputs" appendTo="FitModel">
-						<item name="PostsGeneral"/>
-						<item name="PostsContactRates"/>
-						<item name="epi_DataSummary" transformerFilter="Project"/>
+						<item name="PostsGeneral" showIf="isResult"/>
+						<item name="PostsContactRates" showIf="isResult"/>
+						<item
+						  name="epi_DataSummary"
+						  displayName="Results"
+						  transformerFilter="FitModel"
+						  showIf="isResult"
+						  viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
+						  viewClassAssembly="SyncroSim.Core.Forms"/>/>
 					</group>
 				</group>
 			</group>
