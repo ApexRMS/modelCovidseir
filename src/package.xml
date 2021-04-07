@@ -301,7 +301,7 @@
 							name="epi_DataSummary"
 							displayName="Cases"
 							showIf="isEither"
-							transformerFilter="!FitModel"            
+							transformerFilter="!Fit"            
 							viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
 							viewClassAssembly="SyncroSim.Core.Forms"/>/>          			
 					</group>
@@ -311,7 +311,7 @@
 						<item
 						  name="epi_DataSummary"
 						  displayName="Results"
-						  transformerFilter="FitModel"
+						  transformerFilter="Fit"
 						  showIf="isResult"
 						  viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
 						  viewClassAssembly="SyncroSim.Core.Forms"/>/>
