@@ -297,6 +297,7 @@
 						<item name="General" showIf="isEither"/>
 						<item name="SamplingFractions" showIf="isEither"/>
 						<item name="ContactRateFractions" showIf="isEither"/>
+						<item name="DelayWeibull" displayName="Weibull Distribution" showIf="isEither"/>
 						<item
 							name="epi_DataSummary"
 							displayName="Cases"
