@@ -7,8 +7,6 @@
 			displayName="covidseir model: Download and fit delay data"
 			programName="Rscript"
 			programArguments="prepare_delay.R"
-			extendsTransformer="epi_Primary"
-			runContext="LocalOnly"
 			isRunnable="True">
 			<datafeeds>
 				<datafeed name="DelayInputs" displayName="Reporting Delay - Inputs" dataScope="Scenario">
@@ -77,7 +75,6 @@
 			displayName="covidseir model: Fit"
 			programName="Rscript"
 			programArguments="fit.R"
-			extendsTransformer="epi_Primary"
 			isRunnable ="True">
 			<datafeeds>
 				<datafeed name="FitRunSettings" displayName="covidseir Model - Fit Run Settings" dataScope="Scenario">
@@ -234,7 +231,6 @@
 			displayName="covidseir model: Project"
 			programName="Rscript"
 			programArguments="project.R"
-			extendsTransformer="epi_Primary"
 			isRunnable ="True">
 			<datafeeds>
 				<datafeed name="ProjParams" displayName="Parameters" dataScope="Scenario" isInput="True">
@@ -282,40 +278,42 @@
 	<layouts>
 		<layout name="coreforms_ScenarioDatafeeds">
 			<group name="DelayData" displayName="BC Reporting Delay Data" appendTo="epi_Sources">
-				<item name="DelayInputs" displayName="Inputs" showIf="isEither"/>
+				<item name="DelayInputs" displayName="Inputs" itemTransformer="PrepareDelay" showIf="isEither"/>
 				<group name="Outputs" displayName="Outputs">
-					<item name="DelayOutputs" displayName="Raw Outputs" showIf="isResult"/>
-					<item name="DelayData" displayName="Individual Delay Data" showIf="isResult"/>
-					<item name="DelayWeibull" displayName="Weibull Distribution" showIf="isResult"/>
+					<item name="DelayOutputs" displayName="Raw Outputs" itemTransformer="PrepareDelay" showIf="isResult"/>
+					<item name="DelayData" displayName="Individual Delay Data" itemTransformer="PrepareDelay" showIf="isResult"/>
+					<item name="DelayWeibull" displayName="Weibull Distribution" itemTransformer="PrepareDelay" showIf="isResult"/>
 				</group>
 			</group>
 			<group name="Covidseir" displayName="covidseir Model" appendTo="epi_Models">
-				<group name="FitModel" displayName="Fit Model" appendTo="CovidSeir">
-					<group name="FitInputs" displayName="Inputs" appendTo="FitModel">
-						<item name="FitRunSettings" displayName="Run Settings" showIf="isEither"/>
-						<item name="FitRunJurisdictions" displayName= "Jurisdictions" showIf="isEither"/>
-						<item name="General" showIf="isEither"/>
-						<item name="SamplingFractions" showIf="isEither"/>
-						<item name="ContactRateFractions" showIf="isEither"/>
-						<item name="DelayWeibull" displayName="Weibull Distribution" showIf="isEither"/>
+				<group name="FitModel" displayName="Fit Model">
+					<group name="FitInputs" displayName="Inputs">
+						<item name="FitRunSettings" displayName="Run Settings" itemTransformer="Fit" showIf="isEither"/>
+						<item name="FitRunJurisdictions" displayName= "Jurisdictions" itemTransformer="Fit" showIf="isEither"/>
+						<item name="General" itemTransformer="Fit" showIf="isEither"/>
+						<item name="SamplingFractions" itemTransformer="Fit" showIf="isEither"/>
+						<item name="ContactRateFractions" itemTransformer="Fit" showIf="isEither"/>
+						<item name="DelayWeibull" displayName="Weibull Distribution" itemTransformer="Fit" showIf="isEither"/>
 						<item
 							name="epi_DataSummary"
 							displayName="Cases"
-							showIf="isEither"
-							transformerFilter="!Fit"            
+							showIf="isEither"         
 							viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
-							viewClassAssembly="SyncroSim.Core.Forms"/>/>          			
+							viewClassAssembly="SyncroSim.Core.Forms"
+              filterTransformer="Fit"
+              itemTransformer="Fit"/>          			
 					</group>
-					<group name="FitOutputs" displayName="Outputs" appendTo="FitModel">
-						<item name="PostsGeneral" showIf="isResult"/>
-						<item name="PostsContactRates" showIf="isResult"/>
+					<group name="FitOutputs" displayName="Outputs">
+						<item name="PostsGeneral" itemTransformer="Fit" showIf="isResult"/>
+						<item name="PostsContactRates" itemTransformer="Fit" showIf="isResult"/>
 						<item
 						  name="epi_DataSummary"
 						  displayName="Results"
-						  transformerFilter="Fit"
 						  showIf="isResult"
 						  viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
-						  viewClassAssembly="SyncroSim.Core.Forms"/>/>
+						  viewClassAssembly="SyncroSim.Core.Forms"
+              filterTransformer="Fit"
+              itemTransformer="Fit"/>
 					</group>
 				</group>
 			</group>
