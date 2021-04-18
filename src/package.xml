@@ -83,7 +83,7 @@
 					  <columns>
 						<column name="FitRunSettingsID" dataType="Integer" isPrimary="True"/>
 						<column name="ScenarioID" displayName="Scenario" dataType="Integer"/>
-						<column name="MinimumIteration" dataType="Integer" isVisible="False" defaultValue="1" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1" format="d"/>                
+						<column name="MinimumIteration" dataType="Integer" isVisible="False" defaultValue="1" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1" format="d"/>
 						<column name="MaximumIteration" dataType="Integer" displayName="Iterations" defaultValue="1" validationType="WholeNumber" validationCondition="GreaterEqual" formula1="1" format="d"/>
 					  </columns>
 					</datasheet>
@@ -109,14 +109,15 @@
 							<columns>
 								<column name="ContactRateFractionsID" dataType="Integer" isPrimary="True"/>
 								<column name="ScenarioID" dataType="Integer"/>
-								<column name="BreakDay" dataType="Integer" displayName="Breakpoint Day"/>
+								<column name="BreakDay" dataType="Date" displayName="Breakpoint Date"/>
 								<column name="PriorMean" dataType="Double" displayName="Prior Mean"/>
 								<column name="PriorSD" dataType="Double" displayName="Prior SD"/>
 							</columns>
 							<defaultRecords>
-								<record columns="BreakDay|PriorMean|PriorSD" values="0|0.4|0.2"/>
-								<record columns="BreakDay|PriorMean|PriorSD" values="204|0.6|0.2"/>
-								<record columns="BreakDay|PriorMean|PriorSD" values="322|0.4|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="2020-01-01|0.4|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="2020-10-01|0.95|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="2020-11-13|0.6|0.2"/>
+								<record columns="BreakDay|PriorMean|PriorSD" values="2021-02-15|0.6|0.2"/>
 							</defaultRecords>
 						</datasheet>
 					</datasheets>
@@ -131,15 +132,9 @@
 								<column name="Proportion" dataType="Double" displayName="Proportion [samp_frac_fixed]"/>
 							</columns>
 							<defaultRecords>
-								<record columns="Day|Proportion" values="0|0.2"/>
-								<record columns="Day|Proportion" values="24|0.305"/>
-								<record columns="Day|Proportion" values="26|0.67"/>
-								<record columns="Day|Proportion" values="87|0.745"/>
-								<record columns="Day|Proportion" values="130|0.814"/>
-								<record columns="Day|Proportion" values="152|0.628"/>
-								<record columns="Day|Proportion" values="158|0.775"/>
-								<record columns="Day|Proportion" values="181|0.822"/>
-								<record columns="Day|Proportion" values="201|0.992"/>
+								<record columns="Day|Proportion" values="0|0.14"/>
+								<record columns="Day|Proportion" values="14|0.21"/>
+								<record columns="Day|Proportion" values="52|0.37"/>
 							</defaultRecords>
 						</datasheet>
 					</datasheets>
@@ -157,16 +152,12 @@
 								<column name="R0PriorSD" dataType="Double" displayName="R0 - Prior SD [R0_prior SD]"/>
 								<column name="EPriorMean" dataType="Double" displayName="Social Distancing Fraction - Prior Mean [e_prior mean]"/>
 								<column name="EPriorSD" dataType="Double" displayName="Social Distancing Fraction - Prior SD [e_prior SD]"/>
-								<column name="StartDeclinePriorMean" dataType="Double" displayName="Start Decline Day - Prior mean [start_decline_prior mean]"/>
-								<column name="StartDeclinePriorSD" dataType="Double" displayName="Start Decline Day - Prior SD [start_decline_prior SD]"/>
-								<column name="EndDeclinePriorMean" dataType="Double" displayName="End Decline Day - Prior mean [end_decline_prior mean]"/>
-								<column name="EndDeclinePriorSD" dataType="Double" displayName="End Decline Day - Prior SD [end_decline_prior SD]"/>
 								<column name="FitType" dataType="Integer" displayName="Fit Type [fit_type]" validationType="List" formula1="1:NUTS | 2:VB | 3:optimising"/>
 								<column name="YAML" dataType="String" displayName="Advanced Settings YAML Filename" isExternalFile="True"/>
 								<column name="RDS" dataType="String" displayName="Fit Results RDS Filename"/>
 							</columns>
 							<defaultRecords>
-								<record columns="NPop|I0PriorMean|I0PriorSD|R0PriorMean|R0PriorSD|EPriorMean|EPriorSD|StartDeclinePriorMean|StartDeclinePriorSD|EndDeclinePriorMean|EndDeclinePriorSD|FitType|RDS" values="5071000|8|1|2|0.2|0.8|0.05|15|0.05|22|0.05|3|modelCovidseir_fit"/>
+								<record columns="NPop|I0PriorMean|I0PriorSD|R0PriorMean|R0PriorSD|EPriorMean|EPriorSD|FitType|RDS" values="5071000|10|1|2.6|0.2|0.8|0.05|3|modelCovidseir_fit"/>
 							</defaultRecords>
 						</datasheet>
 					</datasheets>
@@ -194,7 +185,7 @@
 								<column name="ScenarioID" dataType="Integer"/>
 								<column name="Iteration" dataType="Integer" displayName="Iteration"/>
 								<column name="Segment" dataType="Integer" displayName="Segment"/>
-								<column name="Day" dataType="Integer" displayName="Day"/>
+								<column name="Day" dataType="Date" displayName="Timestep"/>
 								<column name="Posterior" dataType="Double" displayName="Posterior"/>
 							</columns>
 						</datasheet>
@@ -294,26 +285,29 @@
 						<item name="SamplingFractions" itemTransformer="Fit" showIf="isEither"/>
 						<item name="ContactRateFractions" itemTransformer="Fit" showIf="isEither"/>
 						<item name="DelayWeibull" displayName="Weibull Distribution" itemTransformer="Fit" showIf="isEither"/>
+						<item name="ProjParams" displayName="Parameters" itemTransformer="Project" showIf="isEither"/>
+						<item name="ProjFileInfo" displayName="File Information" itemTransformer="Project" showIf="isEither"/>
 						<item
 							name="epi_DataSummary"
 							displayName="Cases"
-							showIf="isEither"         
+							showIf="isEither"
 							viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
 							viewClassAssembly="SyncroSim.Core.Forms"
               filterTransformer="Fit"
-              itemTransformer="Fit"/>          			
+              itemTransformer="Fit"/>
 					</group>
 					<group name="FitOutputs" displayName="Outputs">
 						<item name="PostsGeneral" itemTransformer="Fit" showIf="isResult"/>
 						<item name="PostsContactRates" itemTransformer="Fit" showIf="isResult"/>
+						<item name="FitFileInfo" itemTransformer="Project" showIf="isEither"/>
 						<item
 						  name="epi_DataSummary"
 						  displayName="Results"
 						  showIf="isResult"
 						  viewClassName="SyncroSim.Core.Forms.MultiRowDataFeedView"
 						  viewClassAssembly="SyncroSim.Core.Forms"
-              filterTransformer="Fit"
-              itemTransformer="Fit"/>
+              filterTransformer="Project"
+              itemTransformer="Project"/>
 					</group>
 				</group>
 			</group>

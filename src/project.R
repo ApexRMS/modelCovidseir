@@ -13,12 +13,13 @@ env <- ssimEnvironment()
 
 genParams <- datasheet(myScenario, "modelCovidseir_General")
 projParams <- datasheet(myScenario, "modelCovidseir_ProjParams")
-runControl <- datasheet(myScenario, "epi_RunControl")
+# runControl <- datasheet(myScenario, "epi_RunControl")
 
 # if max iteration not given in the table by the user, we set it here
-maxIteration <- runControl$MaximumIteration
-if(length(maxIteration)==0){ maxIteration <- 10 }
-if(is.na(maxIteration)){ maxIteration <- 10 }
+# maxIteration <- runControl$MaximumIteration
+# if(length(maxIteration)==0){ maxIteration <- 10 }
+# if(is.na(maxIteration)){ maxIteration <- 10 }
+maxIteration <- 20
 
 # BC case data
 caseData <- data.table(datasheet(myScenario, "epi_DataSummary"))
@@ -26,14 +27,16 @@ caseData <- caseData[Variable == "Cases - Daily", .SD, .SDcols=c("Timestep", "Va
 caseData[, Timestep:=as.Date(Timestep)]
 
 # if the end day of the projection is not given by the user, default to 45 days
-maxTimeStep <- runControl$MaximumTimestep
-minTimeStep <- runControl$MinimumTimestep
+# maxTimeStep <- runControl$MaximumTimestep
+# minTimeStep <- runControl$MinimumTimestep
 
-# TODO - sort out minimum timestep - should check for valid value from user
-minTimeStep <- max(caseData$Timestep)
+# # TODO - sort out minimum timestep - should check for valid value from user
+# minTimeStep <- max(caseData$Timestep)
+# 
+# if(length(maxTimeStep)==0){ maxTimeStep <- max(caseData$Timestep) + 28 }
+# if(is.na(maxTimeStep)){ maxTimeStep <- max(caseData$Timestep) + 28 }
 
-if(length(maxTimeStep)==0){ maxTimeStep <- max(caseData$Timestep) + 28 }
-if(is.na(maxTimeStep)){ maxTimeStep <- max(caseData$Timestep) + 28 }
+maxTimeStep <- max(caseData$Timestep) + 28
 
 # calculate the duration and extension of the simulation
 totalDuration <- (as.Date(maxTimeStep) - min(caseData$Timestep))[[1]]
@@ -60,48 +63,25 @@ lut <- dplyr::tibble(
 simData <- data.table(Iteration=numeric(), Timestep=character(), Variable=character(), Jurisdiction=character(), Value=numeric(), TransformerID=character())
 simData[, Timestep:=as.Date(Timestep)]
 
-# I tried to get a progress bar, but it's not functioning
-envBeginSimulation(maxIteration)
+theProj <- covidseir::project_seir(
+    theFit,
+    iter = 1:maxIteration,
+    forecast_days = daysToProject,
+    f_fixed_start = max(theFit$days) + projParams$StartChange,
+    f_multi = rep(projParams$Multiplic, daysToProject - projParams$StartChange + 1),
+    f_multi_seg = projParams$FSegment,
+    imported_cases = projParams$Imports,
+    imported_window = projParams$ImportWindow,
+    parallel = (projParams$Parallel=="Yes")
+)
 
-for(index in 1:maxIteration) {
-    # for testing: index = 1
-    envReportProgress(index, 1)
+epiDatasummary <- theProj %>% 
+    mutate(Timestep=day+min(caseData$Timestep)) %>% 
+    select(Timestep, y_rep, .iteration) %>% 
+    rename(Iteration=.iteration, Value=y_rep) %>% 
+    mutate(Jurisdiction="Canada - British Columbia") %>% 
+    mutate(Variable = "Cases - Daily") %>% 
+    mutate(TransformerID = "covidseir model: Project") %>%
+    data.table()
 
-    	# do the projection
-    theProj <- covidseir::project_seir(
-        theFit,
-        iter = 1:1,
-        forecast_days = daysToProject,
-        f_fixed_start = max(theFit$days) + projParams$StartChange,
-        f_multi = rep(projParams$Multiplic, daysToProject - projParams$StartChange + 1),
-        f_multi_seg = projParams$FSegment,
-        imported_cases = projParams$Imports,
-        imported_window = projParams$ImportWindow,
-        parallel = (projParams$Parallel=="Yes")
-    )
-    	# resample for smoother results
-    tidyProj <- covidseir::tidy_seir(theProj, resample_y_rep = projParams$Resampling)
-    tidyProj <- dplyr::left_join(tidyProj, lut, by = "day")
-    	# copy the results of each iteration to a datasheet
-    for(projRow in 1:nrow(theProj))
-    {
-        simData <- rbind(simData, list(
-            Variable = "Cases - Daily",
-            Jurisdiction = "Canada - British Columbia",
-            Timestep = tidyProj[projRow,]$date,
-            Value = tidyProj[projRow,]$y_rep_mean,
-            Iteration = index,
-            TransformerID = "covidseir model: Project"
-        ))
-    }
-    envStepSimulation()
-}
-
-envEndSimulation()
-
-simDataCumul <- simData[, .(Value=cumsum(Value), Timestep=Timestep), by=c(setdiff(names(simData), c('Value', 'Timestep')))]
-simDataCumul$Variable <- "Cases - Cumulative"
-
-totalData <- rbind(simData, simDataCumul)
-
-saveDatasheet(myScenario, totalData, name = "epi_DataSummary")
+saveDatasheet(myScenario, epiDatasummary, name = "epi_DataSummary")
