@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<package name="modelCovidseir" displayName="Run covidseir model" isAddOn="True" extendsPackage="epi" version="1.0.0">
+<package name="modelCovidseir" displayName="Covidseir Model" isAddOn="True" extendsPackage="epi" version="1.0.0">
 	<transformers>
 		<transformer
 			name="PrepareDelay"
